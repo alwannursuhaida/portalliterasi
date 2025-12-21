@@ -46,28 +46,47 @@
                 </div>
 
                 <form id="login-form" onsubmit="handleLogin(event)" class="space-y-5">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap Siswa</label>
-                        <div class="relative">
-                            <i class="fas fa-user absolute left-3 top-3 text-gray-400"></i>
-                            <input type="text" id="input-name" required placeholder="Masukkan nama kamu..." 
-                                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition">
-                        </div>
-                    </div>
-
+                    <!-- Pilih Kelas (Dipindah ke atas untuk filter nama) -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Kelas</label>
                         <div class="relative">
                             <i class="fas fa-school absolute left-3 top-3 text-gray-400"></i>
-                            <select id="input-class" required 
+                            <select id="input-class" required onchange="populateStudentNames()"
                                 class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition bg-white appearance-none">
                                 <option value="" disabled selected>-- Pilih Kelas --</option>
-                                <option value="7A">Kelas 7A - Al-Fatih</option>
-                                <option value="7B">Kelas 7B - Ibnu Sina</option>
-                                <option value="8A">Kelas 8A - Al-Khawarizmi</option>
-                                <option value="8B">Kelas 8B - Al-Farabi</option>
-                                <option value="9A">Kelas 9A - Salahuddin</option>
-                                <option value="9B">Kelas 9B - Averroes</option>
+                                <!-- Kelas 7 -->
+                                <option value="7A">Kelas 7A</option>
+                                <option value="7B">Kelas 7B</option>
+                                <option value="7C">Kelas 7C</option>
+                                <option value="7D">Kelas 7D</option>
+                                <option value="7E">Kelas 7E</option>
+                                <option value="7F">Kelas 7F</option>
+                                <!-- Kelas 8 -->
+                                <option value="8A">Kelas 8A</option>
+                                <option value="8B">Kelas 8B</option>
+                                <option value="8C">Kelas 8C</option>
+                                <option value="8D">Kelas 8D</option>
+                                <option value="8E">Kelas 8E</option>
+                                <option value="8F">Kelas 8F</option>
+                                <!-- Kelas 9 -->
+                                <option value="9A">Kelas 9A</option>
+                                <option value="9B">Kelas 9B</option>
+                                <option value="9C">Kelas 9C</option>
+                                <option value="9D">Kelas 9D</option>
+                                <option value="9E">Kelas 9E</option>
+                            </select>
+                            <i class="fas fa-chevron-down absolute right-3 top-3 text-gray-400 pointer-events-none"></i>
+                        </div>
+                    </div>
+
+                    <!-- Pilih Nama (Dropdown Dinamis) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Siswa</label>
+                        <div class="relative">
+                            <i class="fas fa-user absolute left-3 top-3 text-gray-400"></i>
+                            <select id="input-name" required disabled
+                                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition bg-gray-100 appearance-none cursor-not-allowed">
+                                <option value="" disabled selected>-- Pilih Kelas Terlebih Dahulu --</option>
                             </select>
                             <i class="fas fa-chevron-down absolute right-3 top-3 text-gray-400 pointer-events-none"></i>
                         </div>
@@ -114,6 +133,14 @@
                     <button onclick="switchTab('peringkat')" id="nav-peringkat" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg transition">
                         <i class="fas fa-trophy w-5"></i> Peringkat Rajin
                     </button>
+                    
+                    <!-- MENU BARU: DATABASE (Terkunci) -->
+                    <div class="pt-4 mt-4 border-t border-gray-100">
+                        <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Admin Area</p>
+                        <button onclick="accessDatabase()" id="nav-database" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-lg transition">
+                            <i class="fas fa-lock w-5"></i> Database
+                        </button>
+                    </div>
                 </nav>
 
                 <!-- User Profile Mini -->
@@ -159,9 +186,9 @@
                             </div>
                         </div>
 
-                        <!-- School Highlights Section (Top Students & Classes) -->
+                        <!-- School Highlights Section -->
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <!-- 1. Siswa Terrajin (Top Students) -->
+                            <!-- 1. Siswa Terrajin -->
                             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                                 <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
                                     <span class="bg-yellow-100 text-yellow-600 w-8 h-8 rounded-full flex items-center justify-center text-sm">
@@ -193,7 +220,7 @@
                                 </div>
                             </div>
 
-                            <!-- 2. Kelas Teraktif (Top Classes) -->
+                            <!-- 2. Kelas Teraktif -->
                             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                                 <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
                                     <span class="bg-orange-100 text-orange-600 w-8 h-8 rounded-full flex items-center justify-center text-sm">
@@ -237,38 +264,7 @@
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Personal Stats Grid (Simulated for Demo) -->
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <p class="text-gray-500 text-sm">Buku Kamu</p>
-                                        <h3 class="text-3xl font-bold text-gray-800">12</h3>
-                                    </div>
-                                    <div class="p-2 bg-blue-100 text-blue-600 rounded-lg"><i class="fas fa-book-reader"></i></div>
-                                </div>
-                            </div>
-                            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500">
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <p class="text-gray-500 text-sm">Poin Kamu</p>
-                                        <h3 class="text-3xl font-bold text-gray-800">850</h3>
-                                    </div>
-                                    <div class="p-2 bg-yellow-100 text-yellow-600 rounded-lg"><i class="fas fa-star"></i></div>
-                                </div>
-                            </div>
-                            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-purple-500">
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <p class="text-gray-500 text-sm">Target</p>
-                                        <h3 class="text-3xl font-bold text-gray-800">80%</h3>
-                                    </div>
-                                    <div class="p-2 bg-purple-100 text-purple-600 rounded-lg"><i class="fas fa-chart-line"></i></div>
-                                </div>
-                            </div>
-                        </div>
-
+                        
                         <!-- Chart Section -->
                         <div class="bg-white p-6 rounded-xl shadow-sm">
                             <h3 class="font-bold text-gray-700 mb-4">Statistik Membaca Mingguan</h3>
@@ -282,12 +278,7 @@
                     <section id="view-koleksi" class="hidden space-y-6 fade-in">
                         <div class="flex justify-between items-center mb-6">
                             <h2 class="text-2xl font-bold text-gray-800">Tautan Literasi Eksternal</h2>
-                            <div class="relative opacity-50 cursor-not-allowed hidden"> <!-- Hide search as it's not needed for 2 links -->
-                                <input disabled type="text" placeholder="Cari judul buku..." class="pl-10 pr-4 py-2 rounded-full border border-gray-300 text-sm focus:ring-2 focus:ring-green-500 outline-none w-64">
-                                <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
-                            </div>
                         </div>
-
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="book-grid">
                             <!-- External Links injected by JS -->
                         </div>
@@ -346,6 +337,63 @@
                         </div>
                     </section>
 
+                    <!-- 5. DATABASE VIEW (ADMIN ONLY) -->
+                    <section id="view-database" class="hidden fade-in max-w-4xl mx-auto">
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <h2 class="text-2xl font-bold text-gray-800">Database Siswa</h2>
+                                <p class="text-sm text-gray-500">Kelola data anggota kelas (Khusus Admin)</p>
+                            </div>
+                            <button onclick="switchTab('beranda')" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <!-- Form Input -->
+                            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 md:col-span-1 h-fit">
+                                <h3 class="font-bold text-gray-800 mb-4 pb-2 border-b">Tambah Anggota Kelas</h3>
+                                <form onsubmit="addStudent(event)">
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Kelas</label>
+                                        <select id="db-input-class" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 border p-2 bg-white">
+                                            <option value="" disabled selected>-- Kelas --</option>
+                                            <!-- Options generated by JS or hardcoded same as login -->
+                                            <option value="7A">7A</option> <option value="7B">7B</option> <option value="7C">7C</option> 
+                                            <option value="7D">7D</option> <option value="7E">7E</option> <option value="7F">7F</option>
+                                            <option value="8A">8A</option> <option value="8B">8B</option> <option value="8C">8C</option> 
+                                            <option value="8D">8D</option> <option value="8E">8E</option> <option value="8F">8F</option>
+                                            <option value="9A">9A</option> <option value="9B">9B</option> <option value="9C">9C</option> 
+                                            <option value="9D">9D</option> <option value="9E">9E</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
+                                        <input type="text" id="db-input-name" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 border p-2" placeholder="Nama Siswa" required>
+                                    </div>
+                                    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 transition">
+                                        <i class="fas fa-plus-circle mr-2"></i> Tambah
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- List Display (Simple Preview) -->
+                            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 md:col-span-2">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="font-bold text-gray-800">Daftar Siswa Terdaftar</h3>
+                                    <select id="db-filter-class" onchange="renderStudentList()" class="text-sm border-gray-300 rounded border p-1">
+                                        <option value="all">Semua Kelas</option>
+                                        <option value="7A">7A</option><option value="7B">7B</option><option value="8A">8A</option><option value="9A">9A</option>
+                                        <!-- Add more as needed just for filter demo -->
+                                    </select>
+                                </div>
+                                <div class="overflow-y-auto h-96 pr-2">
+                                    <ul id="db-student-list" class="space-y-2">
+                                        <!-- List items injected by JS -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
                 </div>
             </main>
         </div>
@@ -369,7 +417,6 @@
                 { name: "Dewi Lestari", class: "9B", books: 15, points: 720 },
                 { name: "Rizky Ramadhan", class: "8A", books: 12, points: 600 },
             ],
-            // Data Highlights (Siswa & Kelas Teraktif)
             highlights: {
                 students: {
                     male: { name: "Fatih Al-Ayyubi", class: "9A", books: 42 },
@@ -379,33 +426,85 @@
                     male: { name: "7A - Al-Fatih", total: 450 },
                     female: { name: "9B - Averroes", total: 520 }
                 }
+            },
+            // NEW: Database Siswa (Contoh Data Awal)
+            studentData: {
+                "7A": ["Budi Santoso", "Andi Pratama", "Citra Lestari"],
+                "7B": ["Doni Kurniawan", "Eka Putri"],
+                "8A": ["Rizky Ramadhan", "Fajar Nugraha"],
+                "8B": ["Siti Aminah", "Gita Gutawa"],
+                "9A": ["Ahmad Fulan", "Fatih Al-Ayyubi"],
+                "9B": ["Dewi Lestari", "Aisyah Humaira"],
+                // Inisialisasi array kosong untuk kelas lain agar tidak error
+                "7C": [], "7D": [], "7E": [], "7F": [],
+                "8C": [], "8D": [], "8E": [], "8F": [],
+                "9C": [], "9D": [], "9E": []
             }
         };
 
         // --- 2. INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', () => {
             const storedUser = localStorage.getItem('albannaUser');
+            // Check localStorage for student data updates
+            const storedDB = localStorage.getItem('albannaStudents');
+            if (storedDB) {
+                state.studentData = JSON.parse(storedDB);
+            }
+
             if (storedUser) {
                 state.user = JSON.parse(storedUser);
                 showDashboard();
             }
             renderBooks();
             renderLeaderboard();
-            renderHighlights(); // Render fungsi baru
+            renderHighlights(); 
             initChart();
         });
 
-        // --- 3. AUTHENTICATION ---
+        // --- 3. LOGIN & DROPDOWN LOGIC ---
+        function populateStudentNames() {
+            const classSelect = document.getElementById('input-class');
+            const nameSelect = document.getElementById('input-name');
+            const selectedClass = classSelect.value;
+
+            // Reset Name Dropdown
+            nameSelect.innerHTML = '<option value="" disabled selected>-- Pilih Nama --</option>';
+            
+            if (selectedClass && state.studentData[selectedClass]) {
+                const students = state.studentData[selectedClass];
+                
+                if (students.length > 0) {
+                    students.forEach(name => {
+                        const option = document.createElement('option');
+                        option.value = name;
+                        option.textContent = name;
+                        nameSelect.appendChild(option);
+                    });
+                    nameSelect.disabled = false;
+                    nameSelect.classList.remove('bg-gray-100', 'cursor-not-allowed');
+                    nameSelect.classList.add('bg-white');
+                } else {
+                    const option = document.createElement('option');
+                    option.textContent = "Belum ada data siswa";
+                    nameSelect.appendChild(option);
+                    nameSelect.disabled = true;
+                }
+            } else {
+                nameSelect.disabled = true;
+                nameSelect.classList.add('bg-gray-100', 'cursor-not-allowed');
+                nameSelect.classList.remove('bg-white');
+            }
+        }
+
         function handleLogin(e) {
             e.preventDefault();
-            const name = document.getElementById('input-name').value;
             const kelas = document.getElementById('input-class').value;
+            const name = document.getElementById('input-name').value;
 
             if(name && kelas) {
                 state.user = { name, kelas };
                 localStorage.setItem('albannaUser', JSON.stringify(state.user));
                 
-                // Add loading effect simulation
                 const btn = e.target.querySelector('button');
                 const originalText = btn.innerHTML;
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memuat...';
@@ -414,6 +513,8 @@
                     btn.innerHTML = originalText;
                     showDashboard();
                 }, 800);
+            } else {
+                alert('Mohon pilih Kelas dan Nama siswa.');
             }
         }
 
@@ -423,59 +524,123 @@
                 state.user = null;
                 document.getElementById('dashboard-view').classList.add('hidden');
                 document.getElementById('login-view').classList.remove('hidden');
-                // Reset form
                 document.getElementById('login-form').reset();
+                // Reset dropdown state
+                const nameSelect = document.getElementById('input-name');
+                nameSelect.innerHTML = '<option value="" disabled selected>-- Pilih Kelas Terlebih Dahulu --</option>';
+                nameSelect.disabled = true;
+                nameSelect.classList.add('bg-gray-100', 'cursor-not-allowed');
             }
         }
 
         function showDashboard() {
-            // Hide Login, Show Dashboard
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('dashboard-view').classList.remove('hidden');
-            document.getElementById('dashboard-view').classList.add('flex'); // Ensure flex is added back
+            document.getElementById('dashboard-view').classList.add('flex');
 
-            // Update User Info UI
             document.getElementById('display-name').textContent = state.user.name;
-            document.getElementById('welcome-name').textContent = state.user.name.split(' ')[0]; // First name only
+            document.getElementById('welcome-name').textContent = state.user.name.split(' ')[0];
             document.getElementById('display-class').textContent = state.user.kelas;
             
-            // Initials avatar
             const initials = state.user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
             document.getElementById('user-avatar').textContent = initials;
 
             switchTab('beranda');
         }
 
-        // --- 4. NAVIGATION (SPA LOGIC) ---
+        // --- 4. NAVIGATION & DATABASE LOGIC ---
         function switchTab(tabName) {
-            // Update State
             state.currentTab = tabName;
-
-            // Hide all views
-            ['beranda', 'koleksi', 'jurnal', 'peringkat'].forEach(view => {
-                document.getElementById(`view-${view}`).classList.add('hidden');
-                document.getElementById(`nav-${view}`).classList.remove('bg-green-50', 'text-green-700');
-                document.getElementById(`nav-${view}`).classList.add('text-gray-600');
+            ['beranda', 'koleksi', 'jurnal', 'peringkat', 'database'].forEach(view => {
+                const el = document.getElementById(`view-${view}`);
+                if(el) el.classList.add('hidden');
+                
+                const nav = document.getElementById(`nav-${view}`);
+                if(nav) {
+                    nav.classList.remove('bg-green-50', 'text-green-700');
+                    nav.classList.add('text-gray-600');
+                    // Reset styling khusus untuk database button jika ada
+                    if(view === 'database') nav.classList.add('hover:text-red-600'); 
+                }
             });
 
-            // Show selected view
             document.getElementById(`view-${tabName}`).classList.remove('hidden');
             
-            // Update Active Nav Style
             const activeNav = document.getElementById(`nav-${tabName}`);
-            activeNav.classList.remove('text-gray-600');
-            activeNav.classList.add('bg-green-50', 'text-green-700');
-
-            // Scroll to top
+            if(activeNav) {
+                activeNav.classList.remove('text-gray-600');
+                activeNav.classList.add('bg-green-50', 'text-green-700');
+            }
             document.getElementById('main-scroll').scrollTop = 0;
         }
 
-        // --- 5. RENDER FUNCTIONS ---
-        // NEW: Fungsi untuk merender Highlights Siswa & Kelas
+        // NEW: Database Access Security
+        function accessDatabase() {
+            const password = prompt("Masukkan Password Admin untuk mengakses Database:", "");
+            if (password === "admin123") {
+                switchTab('database');
+                renderStudentList();
+            } else {
+                alert("Password salah! Akses ditolak.");
+            }
+        }
+
+        // NEW: Add Student Logic
+        function addStudent(e) {
+            e.preventDefault();
+            const kelas = document.getElementById('db-input-class').value;
+            const name = document.getElementById('db-input-name').value;
+
+            if (kelas && name) {
+                if (!state.studentData[kelas]) state.studentData[kelas] = [];
+                state.studentData[kelas].push(name);
+                
+                // Simpan ke localStorage agar permanen (di browser ini)
+                localStorage.setItem('albannaStudents', JSON.stringify(state.studentData));
+
+                alert(`Berhasil menambahkan ${name} ke kelas ${kelas}`);
+                document.getElementById('db-input-name').value = '';
+                renderStudentList();
+            }
+        }
+
+        // NEW: Render Student List in Admin View
+        function renderStudentList() {
+            const filterClass = document.getElementById('db-filter-class').value;
+            const listContainer = document.getElementById('db-student-list');
+            listContainer.innerHTML = '';
+
+            let classesToShow = [];
+            if (filterClass === 'all') {
+                classesToShow = Object.keys(state.studentData).sort();
+            } else {
+                classesToShow = [filterClass];
+            }
+
+            classesToShow.forEach(cls => {
+                const students = state.studentData[cls] || [];
+                students.forEach(student => {
+                    const li = document.createElement('li');
+                    li.className = "flex justify-between items-center bg-gray-50 p-3 rounded border border-gray-100";
+                    li.innerHTML = `
+                        <div>
+                            <span class="font-medium text-gray-800">${student}</span>
+                            <span class="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">${cls}</span>
+                        </div>
+                        <i class="fas fa-user text-gray-300"></i>
+                    `;
+                    listContainer.appendChild(li);
+                });
+            });
+            
+            if(listContainer.innerHTML === '') {
+                listContainer.innerHTML = '<p class="text-center text-gray-400 py-4">Tidak ada data siswa untuk ditampilkan.</p>';
+            }
+        }
+
+        // --- 5. RENDER FUNCTIONS (EXISTING) ---
         function renderHighlights() {
             const h = state.highlights;
-            
-            // Render Siswa
             document.getElementById('top-student-male-name').textContent = h.students.male.name;
             document.getElementById('top-student-male-class').textContent = h.students.male.class;
             document.getElementById('top-student-male-books').textContent = h.students.male.books;
@@ -484,7 +649,6 @@
             document.getElementById('top-student-female-class').textContent = h.students.female.class;
             document.getElementById('top-student-female-books').textContent = h.students.female.books;
 
-            // Render Kelas
             document.getElementById('top-class-male-name').textContent = h.classes.male.name;
             document.getElementById('top-class-male-total').textContent = h.classes.male.total;
 
@@ -494,7 +658,6 @@
 
         function renderBooks() {
             const grid = document.getElementById('book-grid');
-            // Updated to render <a> tags for external links
             grid.innerHTML = state.books.map(book => `
                 <a href="${book.link}" target="_blank" class="bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition cursor-pointer border border-gray-100 group block">
                     <div class="${book.color} h-40 rounded-lg mb-3 flex items-center justify-center text-4xl text-gray-400 group-hover:scale-105 transition transform">
@@ -544,7 +707,6 @@
             }
         }
 
-        // --- 6. CHART.JS ---
         function initChart() {
             const ctx = document.getElementById('readChart').getContext('2d');
             new Chart(ctx, {
@@ -561,9 +723,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
+                    plugins: { legend: { display: false } },
                     scales: {
                         y: { beginAtZero: true, grid: { display: false } },
                         x: { grid: { display: false } }
