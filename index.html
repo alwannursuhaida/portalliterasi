@@ -8,6 +8,55 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, onSnapshot, query, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Configuration Hook
+        let db, auth, appId;
+        const initFirebase = async () => {
+            try {
+                if (typeof __firebase_config !== 'undefined') {
+                    const firebaseConfig = JSON.parse(__firebase_config);
+                    const app = initializeApp(firebaseConfig);
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+                    appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+
+                    // Globalize for app usage
+                    window.db = db;
+                    window.auth = auth;
+                    window.appId = appId;
+                    window.collection = collection;
+                    window.doc = doc;
+                    window.setDoc = setDoc;
+                    window.onSnapshot = onSnapshot;
+                    window.query = query;
+                    
+                    console.log("Firebase initialized");
+                    
+                    // Trigger custom event so main app knows Firebase is ready
+                    window.dispatchEvent(new Event('firebase-ready'));
+                } else {
+                    console.warn("Firebase config not found. Running in local mode (Assessment saving will simulate).");
+                }
+            } catch (e) {
+                console.error("Firebase init error:", e);
+            }
+        };
+
+        initFirebase();
+    </script>
+
     <style>
         body { font-family: 'Poppins', sans-serif; }
         .fade-in { animation: fadeIn 0.5s ease-in-out; }
@@ -15,24 +64,25 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #10B981; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #059669; }
+        .glass-effect { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
         
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-        }
+        /* Category Badges */
+        .badge-dini { background-color: #fee2e2; color: #991b1b; }
+        .badge-awal { background-color: #ffedd5; color: #9a3412; }
+        .badge-semenjana { background-color: #fef9c3; color: #854d0e; }
+        .badge-madya { background-color: #dcfce7; color: #166534; }
+        .badge-mahir { background-color: #dbeafe; color: #1e40af; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 h-screen overflow-hidden">
 
-    <!-- APP CONTAINER -->
     <div id="app" class="h-full w-full relative">
         
-        <!-- 1. LOGIN SECTION (Index Page) -->
+        <!-- 1. LOGIN SECTION -->
         <div id="login-view" class="h-full w-full flex items-center justify-center bg-gradient-to-br from-green-500 to-teal-700 p-4">
             <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md fade-in relative overflow-hidden">
                 <div class="absolute top-0 left-0 w-full h-2 bg-yellow-400"></div>
@@ -46,7 +96,6 @@
                 </div>
 
                 <form id="login-form" onsubmit="handleLogin(event)" class="space-y-5">
-                    <!-- Pilih Kelas (Dipindah ke atas untuk filter nama) -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Kelas</label>
                         <div class="relative">
@@ -54,32 +103,23 @@
                             <select id="input-class" required onchange="populateStudentNames()"
                                 class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition bg-white appearance-none">
                                 <option value="" disabled selected>-- Pilih Kelas --</option>
-                                <!-- Kelas 7 -->
-                                <option value="7A">Kelas 7A</option>
-                                <option value="7B">Kelas 7B</option>
-                                <option value="7C">Kelas 7C</option>
-                                <option value="7D">Kelas 7D</option>
-                                <option value="7E">Kelas 7E</option>
-                                <option value="7F">Kelas 7F</option>
-                                <!-- Kelas 8 -->
-                                <option value="8A">Kelas 8A</option>
-                                <option value="8B">Kelas 8B</option>
-                                <option value="8C">Kelas 8C</option>
-                                <option value="8D">Kelas 8D</option>
-                                <option value="8E">Kelas 8E</option>
-                                <option value="8F">Kelas 8F</option>
-                                <!-- Kelas 9 -->
-                                <option value="9A">Kelas 9A</option>
-                                <option value="9B">Kelas 9B</option>
-                                <option value="9C">Kelas 9C</option>
-                                <option value="9D">Kelas 9D</option>
-                                <option value="9E">Kelas 9E</option>
+                                <optgroup label="Kelas 7">
+                                    <option value="7A">7A (Putra)</option><option value="7B">7B (Putra)</option><option value="7C">7C (Putra)</option>
+                                    <option value="7D">7D (Putri)</option><option value="7E">7E (Putri)</option><option value="7F">7F (Putri)</option>
+                                </optgroup>
+                                <optgroup label="Kelas 8">
+                                    <option value="8A">8A (Putra)</option><option value="8B">8B (Putra)</option><option value="8C">8C (Putra)</option>
+                                    <option value="8D">8D (Putri)</option><option value="8E">8E (Putri)</option><option value="8F">8F (Putri)</option>
+                                </optgroup>
+                                <optgroup label="Kelas 9">
+                                    <option value="9A">9A (Putra)</option><option value="9B">9B (Putra)</option><option value="9C">9C (Putra)</option>
+                                    <option value="9D">9D (Putri)</option><option value="9E">9E (Putri)</option>
+                                </optgroup>
                             </select>
                             <i class="fas fa-chevron-down absolute right-3 top-3 text-gray-400 pointer-events-none"></i>
                         </div>
                     </div>
 
-                    <!-- Pilih Nama (Dropdown Dinamis) -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Nama Siswa</label>
                         <div class="relative">
@@ -104,7 +144,7 @@
             </div>
         </div>
 
-        <!-- 2. DASHBOARD LAYOUT (Hidden by default) -->
+        <!-- 2. DASHBOARD LAYOUT -->
         <div id="dashboard-view" class="hidden h-full flex flex-col md:flex-row">
             
             <!-- Sidebar -->
@@ -124,17 +164,21 @@
                     <button onclick="switchTab('beranda')" id="nav-beranda" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg bg-green-50 text-green-700">
                         <i class="fas fa-home w-5"></i> Beranda
                     </button>
+                    <!-- MENU BARU: ASESMEN -->
+                    <button onclick="switchTab('asesmen')" id="nav-asesmen" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg transition">
+                        <i class="fas fa-clipboard-check w-5"></i> Asesmen
+                    </button>
+                    <!-- MENU BARU: PETA LITERASI (KATEGORI) -->
+                    <button onclick="switchTab('kategori')" id="nav-kategori" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg transition">
+                        <i class="fas fa-map w-5"></i> Peta Literasi
+                    </button>
                     <button onclick="switchTab('koleksi')" id="nav-koleksi" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg transition">
                         <i class="fas fa-swatchbook w-5"></i> Koleksi Buku
                     </button>
                     <button onclick="switchTab('jurnal')" id="nav-jurnal" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg transition">
                         <i class="fas fa-pen-fancy w-5"></i> Tulis Jurnal
                     </button>
-                    <button onclick="switchTab('peringkat')" id="nav-peringkat" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg transition">
-                        <i class="fas fa-trophy w-5"></i> Peringkat Rajin
-                    </button>
                     
-                    <!-- MENU BARU: DATABASE (Terkunci) -->
                     <div class="pt-4 mt-4 border-t border-gray-100">
                         <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Admin Area</p>
                         <button onclick="accessDatabase()" id="nav-database" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-lg transition">
@@ -168,229 +212,194 @@
                     <button onclick="alert('Menu sidebar tersedia di tampilan desktop untuk demo ini.')" class="text-gray-500"><i class="fas fa-bars"></i></button>
                 </header>
 
-                <!-- Scrollable Content -->
                 <div id="main-scroll" class="flex-1 overflow-y-auto p-4 md:p-8">
                     
                     <!-- 1. BERANDA VIEW -->
                     <section id="view-beranda" class="space-y-6 fade-in">
-                        <!-- Welcome Banner -->
+                        <!-- Welcome Banner with Dynamic Category -->
                         <div class="bg-gradient-to-r from-green-600 to-teal-600 rounded-2xl p-6 md:p-10 text-white shadow-lg relative overflow-hidden">
                             <div class="absolute right-0 top-0 opacity-10 transform translate-x-10 -translate-y-10">
                                 <i class="fas fa-book text-9xl"></i>
                             </div>
                             <h2 class="text-2xl md:text-3xl font-bold mb-2">Ahlan Wa Sahlan, <span id="welcome-name">Siswa</span>! 👋</h2>
-                            <p class="text-green-100 max-w-lg">Sudah membaca buku apa hari ini? Mari tingkatkan literasi untuk masa depan yang gemilang.</p>
+                            <p id="assessment-greeting" class="text-green-100 max-w-lg mb-4 text-lg">
+                                <!-- Will be filled by JS based on assessment -->
+                                Yuk mulai petualangan membaca kamu!
+                            </p>
                             <div class="mt-6 flex gap-3">
-                                <button onclick="switchTab('koleksi')" class="bg-white text-green-700 px-5 py-2 rounded-lg font-semibold shadow hover:bg-gray-100 transition">Cari Buku</button>
-                                <button onclick="switchTab('jurnal')" class="bg-green-700 bg-opacity-50 text-white border border-green-400 px-5 py-2 rounded-lg font-semibold hover:bg-opacity-70 transition">Tulis Review</button>
+                                <button onclick="switchTab('asesmen')" class="bg-yellow-400 text-yellow-900 px-5 py-2 rounded-lg font-bold shadow hover:bg-yellow-300 transition">
+                                    <i class="fas fa-clipboard-check mr-2"></i> Cek Level Membaca
+                                </button>
+                                <button onclick="switchTab('koleksi')" class="bg-white bg-opacity-20 text-white border border-white px-5 py-2 rounded-lg font-semibold hover:bg-opacity-30 transition">Cari Buku</button>
                             </div>
                         </div>
 
-                        <!-- School Highlights Section -->
+                        <!-- Highlights Section -->
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <!-- 1. Siswa Terrajin -->
                             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                                 <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                                    <span class="bg-yellow-100 text-yellow-600 w-8 h-8 rounded-full flex items-center justify-center text-sm">
-                                        <i class="fas fa-crown"></i>
-                                    </span>
+                                    <span class="bg-yellow-100 text-yellow-600 w-8 h-8 rounded-full flex items-center justify-center text-sm"><i class="fas fa-crown"></i></span>
                                     Siswa Aktif Literasi
                                 </h3>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <!-- Putra -->
-                                    <div class="bg-blue-50 rounded-xl p-4 border border-blue-100 relative overflow-hidden group hover:shadow-md transition">
-                                        <div class="absolute right-0 top-0 p-2 opacity-10"><i class="fas fa-user-tie text-6xl text-blue-600"></i></div>
-                                        <p class="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1 bg-blue-100 inline-block px-2 py-0.5 rounded">Putra</p>
-                                        <h4 class="font-bold text-gray-800 text-lg mt-1 truncate" id="top-student-male-name">...</h4>
-                                        <p class="text-sm text-gray-600 mb-2" id="top-student-male-class">...</p>
-                                        <div class="flex items-center gap-2 text-blue-700 font-semibold text-sm">
-                                            <i class="fas fa-book-open"></i> <span id="top-student-male-books">0</span> Buku
-                                        </div>
-                                    </div>
-                                    <!-- Putri -->
-                                    <div class="bg-pink-50 rounded-xl p-4 border border-pink-100 relative overflow-hidden group hover:shadow-md transition">
-                                        <div class="absolute right-0 top-0 p-2 opacity-10"><i class="fas fa-user-graduate text-6xl text-pink-600"></i></div>
-                                        <p class="text-[10px] font-bold text-pink-600 uppercase tracking-wider mb-1 bg-pink-100 inline-block px-2 py-0.5 rounded">Putri</p>
-                                        <h4 class="font-bold text-gray-800 text-lg mt-1 truncate" id="top-student-female-name">...</h4>
-                                        <p class="text-sm text-gray-600 mb-2" id="top-student-female-class">...</p>
-                                        <div class="flex items-center gap-2 text-pink-700 font-semibold text-sm">
-                                            <i class="fas fa-book-open"></i> <span id="top-student-female-books">0</span> Buku
-                                        </div>
-                                    </div>
-                                </div>
+                                <p class="text-gray-400 text-sm italic text-center py-4">Data statistik belum tersedia.</p>
                             </div>
-
-                            <!-- 2. Kelas Teraktif -->
                             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                                 <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                                    <span class="bg-orange-100 text-orange-600 w-8 h-8 rounded-full flex items-center justify-center text-sm">
-                                        <i class="fas fa-trophy"></i>
-                                    </span>
+                                    <span class="bg-orange-100 text-orange-600 w-8 h-8 rounded-full flex items-center justify-center text-sm"><i class="fas fa-trophy"></i></span>
                                     Kelas Aktif Literasi
                                 </h3>
-                                <div class="space-y-3">
-                                    <!-- Putra -->
-                                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100 transition group">
-                                        <div class="flex items-center gap-4">
-                                            <div class="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl group-hover:scale-110 transition">
-                                                <i class="fas fa-mosque"></i>
-                                            </div>
-                                            <div>
-                                                <p class="text-xs font-bold text-gray-400 uppercase">Kelas Putra</p>
-                                                <h4 class="font-bold text-gray-800" id="top-class-male-name">...</h4>
-                                            </div>
-                                        </div>
-                                        <div class="text-right">
-                                            <p class="text-2xl font-bold text-indigo-600" id="top-class-male-total">0</p>
-                                            <p class="text-xs text-gray-500">Buku Dibaca</p>
-                                        </div>
-                                    </div>
-                                    <!-- Putri -->
-                                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100 transition group">
-                                        <div class="flex items-center gap-4">
-                                            <div class="w-12 h-12 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-xl group-hover:scale-110 transition">
-                                                <i class="fas fa-school"></i>
-                                            </div>
-                                            <div>
-                                                <p class="text-xs font-bold text-gray-400 uppercase">Kelas Putri</p>
-                                                <h4 class="font-bold text-gray-800" id="top-class-female-name">...</h4>
-                                            </div>
-                                        </div>
-                                        <div class="text-right">
-                                            <p class="text-2xl font-bold text-purple-600" id="top-class-female-total">0</p>
-                                            <p class="text-xs text-gray-500">Buku Dibaca</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Chart Section -->
-                        <div class="bg-white p-6 rounded-xl shadow-sm">
-                            <h3 class="font-bold text-gray-700 mb-4">Statistik Membaca Mingguan</h3>
-                            <div class="h-64">
-                                <canvas id="readChart"></canvas>
+                                <p class="text-gray-400 text-sm italic text-center py-4">Data statistik belum tersedia.</p>
                             </div>
                         </div>
                     </section>
 
-                    <!-- 2. KOLEKSI BUKU VIEW (External Links) -->
+                    <!-- 2. ASESMEN VIEW (NEW) -->
+                    <section id="view-asesmen" class="hidden fade-in max-w-2xl mx-auto">
+                        <div class="text-center mb-8">
+                            <h2 class="text-2xl font-bold text-gray-800">Asesmen Literasi</h2>
+                            <p class="text-gray-500">Jawab pertanyaan berikut untuk mengetahui kategori membaca kamu.</p>
+                        </div>
+                        
+                        <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+                            <form onsubmit="submitAssessment(event)" class="space-y-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">1. Berapa banyak buku yang kamu baca dalam sebulan terakhir?</label>
+                                    <select id="q1" class="w-full border-gray-300 rounded-lg p-2 border">
+                                        <option value="1">Belum ada / Kurang dari 1</option>
+                                        <option value="2">1-2 Buku</option>
+                                        <option value="3">3-5 Buku</option>
+                                        <option value="4">Lebih dari 5 Buku</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">2. Jenis buku apa yang paling sering kamu baca?</label>
+                                    <select id="q2" class="w-full border-gray-300 rounded-lg p-2 border">
+                                        <option value="1">Komik bergambar sedikit teks</option>
+                                        <option value="2">Cerita pendek / Majalah</option>
+                                        <option value="3">Novel remaja / Fiksi</option>
+                                        <option value="4">Buku non-fiksi / Pengetahuan berat</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">3. Apakah kamu paham isi buku yang kamu baca?</label>
+                                    <select id="q3" class="w-full border-gray-300 rounded-lg p-2 border">
+                                        <option value="1">Sering bingung</option>
+                                        <option value="2">Paham sebagian besar</option>
+                                        <option value="3">Sangat paham dan bisa menceritakan ulang</option>
+                                        <option value="4">Paham dan bisa mengkritisi isi buku</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">
+                                    Lihat Hasil & Simpan <i class="fas fa-save ml-2"></i>
+                                </button>
+                            </form>
+                            <div id="assessment-result" class="hidden mt-6 p-4 rounded-lg bg-green-50 border border-green-200 text-center">
+                                <p class="text-gray-600">Selamat! Kategori kamu adalah:</p>
+                                <h3 class="text-2xl font-bold text-green-700 mt-2" id="result-category">...</h3>
+                                <p class="text-xs text-gray-500 mt-2">Data telah disimpan ke database.</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 3. KATEGORI (PETA LITERASI) VIEW (NEW) -->
+                    <section id="view-kategori" class="hidden fade-in">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-6">Peta Literasi Sekolah</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                            <!-- Column 1: Dini -->
+                            <div class="bg-white p-4 rounded-xl border-t-4 border-red-200 shadow-sm">
+                                <h3 class="font-bold text-gray-700 text-center mb-4">Pembaca Dini</h3>
+                                <ul id="list-dini" class="space-y-2 text-sm text-gray-600"></ul>
+                            </div>
+                            <!-- Column 2: Awal -->
+                            <div class="bg-white p-4 rounded-xl border-t-4 border-orange-200 shadow-sm">
+                                <h3 class="font-bold text-gray-700 text-center mb-4">Pembaca Awal</h3>
+                                <ul id="list-awal" class="space-y-2 text-sm text-gray-600"></ul>
+                            </div>
+                            <!-- Column 3: Semenjana -->
+                            <div class="bg-white p-4 rounded-xl border-t-4 border-yellow-200 shadow-sm">
+                                <h3 class="font-bold text-gray-700 text-center mb-4">Pembaca Semenjana</h3>
+                                <ul id="list-semenjana" class="space-y-2 text-sm text-gray-600"></ul>
+                            </div>
+                            <!-- Column 4: Madya -->
+                            <div class="bg-white p-4 rounded-xl border-t-4 border-green-200 shadow-sm">
+                                <h3 class="font-bold text-gray-700 text-center mb-4">Pembaca Madya</h3>
+                                <ul id="list-madya" class="space-y-2 text-sm text-gray-600"></ul>
+                            </div>
+                            <!-- Column 5: Mahir -->
+                            <div class="bg-white p-4 rounded-xl border-t-4 border-blue-200 shadow-sm">
+                                <h3 class="font-bold text-gray-700 text-center mb-4">Pembaca Mahir</h3>
+                                <ul id="list-mahir" class="space-y-2 text-sm text-gray-600"></ul>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 4. KOLEKSI BUKU VIEW -->
                     <section id="view-koleksi" class="hidden space-y-6 fade-in">
                         <div class="flex justify-between items-center mb-6">
                             <h2 class="text-2xl font-bold text-gray-800">Tautan Literasi Eksternal</h2>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="book-grid">
-                            <!-- External Links injected by JS -->
+                            <!-- External Links -->
                         </div>
                     </section>
 
-                    <!-- 3. JURNAL VIEW -->
+                    <!-- 5. JURNAL VIEW -->
                     <section id="view-jurnal" class="hidden fade-in max-w-2xl mx-auto">
                         <h2 class="text-2xl font-bold text-gray-800 mb-6">Tulis Jurnal Literasi</h2>
                         <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
                             <form onsubmit="submitJournal(event)">
                                 <div class="mb-4">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Judul Buku</label>
-                                    <input type="text" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 border p-2" placeholder="Contoh: Laskar Pelangi" required>
+                                    <input type="text" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 border p-2" required>
                                 </div>
                                 <div class="mb-4">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Penulis</label>
                                     <input type="text" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 border p-2" required>
                                 </div>
                                 <div class="mb-4">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Ringkasan / Hikmah yang didapat</label>
-                                    <textarea rows="4" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 border p-2" placeholder="Tuliskan apa yang kamu pelajari dari buku ini..." required></textarea>
-                                </div>
-                                <div class="mb-6">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Rating Buku</label>
-                                    <div class="flex gap-2 text-2xl text-gray-300 cursor-pointer" id="star-rating">
-                                        <i class="fas fa-star hover:text-yellow-400 transition" onclick="setRating(1)"></i>
-                                        <i class="fas fa-star hover:text-yellow-400 transition" onclick="setRating(2)"></i>
-                                        <i class="fas fa-star hover:text-yellow-400 transition" onclick="setRating(3)"></i>
-                                        <i class="fas fa-star hover:text-yellow-400 transition" onclick="setRating(4)"></i>
-                                        <i class="fas fa-star hover:text-yellow-400 transition" onclick="setRating(5)"></i>
-                                    </div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Ringkasan</label>
+                                    <textarea rows="4" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 border p-2" required></textarea>
                                 </div>
                                 <button type="submit" class="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 transition">Kirim Jurnal</button>
                             </form>
                         </div>
                     </section>
 
-                    <!-- 4. PERINGKAT VIEW -->
-                    <section id="view-peringkat" class="hidden fade-in">
-                        <h2 class="text-2xl font-bold text-gray-800 mb-6">Papan Peringkat Literasi</h2>
-                        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-                            <table class="w-full text-left border-collapse">
-                                <thead class="bg-gray-100 text-gray-600 uppercase text-xs font-bold">
-                                    <tr>
-                                        <th class="px-6 py-4">#</th>
-                                        <th class="px-6 py-4">Siswa</th>
-                                        <th class="px-6 py-4">Kelas</th>
-                                        <th class="px-6 py-4 text-center">Buku Dibaca</th>
-                                        <th class="px-6 py-4 text-center">Poin</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-200" id="leaderboard-body">
-                                    <!-- Rows injected by JS -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </section>
-
-                    <!-- 5. DATABASE VIEW (ADMIN ONLY) -->
-                    <section id="view-database" class="hidden fade-in max-w-4xl mx-auto">
+                    <!-- 6. DATABASE VIEW (ADMIN) -->
+                    <section id="view-database" class="hidden fade-in max-w-5xl mx-auto">
                         <div class="flex justify-between items-center mb-6">
                             <div>
-                                <h2 class="text-2xl font-bold text-gray-800">Database Siswa</h2>
-                                <p class="text-sm text-gray-500">Kelola data anggota kelas (Khusus Admin)</p>
+                                <h2 class="text-2xl font-bold text-gray-800">Database Siswa (Input Massal)</h2>
+                                <p class="text-sm text-gray-500">Masukkan nama siswa ke dalam kotak yang tersedia (Max 30 sekaligus)</p>
                             </div>
                             <button onclick="switchTab('beranda')" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <!-- Form Input -->
-                            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 md:col-span-1 h-fit">
-                                <h3 class="font-bold text-gray-800 mb-4 pb-2 border-b">Tambah Anggota Kelas</h3>
-                                <form onsubmit="addStudent(event)">
-                                    <div class="mb-4">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Kelas</label>
-                                        <select id="db-input-class" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 border p-2 bg-white">
-                                            <option value="" disabled selected>-- Kelas --</option>
-                                            <!-- Options generated by JS or hardcoded same as login -->
-                                            <option value="7A">7A</option> <option value="7B">7B</option> <option value="7C">7C</option> 
-                                            <option value="7D">7D</option> <option value="7E">7E</option> <option value="7F">7F</option>
-                                            <option value="8A">8A</option> <option value="8B">8B</option> <option value="8C">8C</option> 
-                                            <option value="8D">8D</option> <option value="8E">8E</option> <option value="8F">8F</option>
-                                            <option value="9A">9A</option> <option value="9B">9B</option> <option value="9C">9C</option> 
-                                            <option value="9D">9D</option> <option value="9E">9E</option>
-                                        </select>
-                                    </div>
-                                    <div class="mb-4">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
-                                        <input type="text" id="db-input-name" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 border p-2" placeholder="Nama Siswa" required>
-                                    </div>
-                                    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 transition">
-                                        <i class="fas fa-plus-circle mr-2"></i> Tambah
-                                    </button>
-                                </form>
-                            </div>
-
-                            <!-- List Display (Simple Preview) -->
-                            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 md:col-span-2">
-                                <div class="flex justify-between items-center mb-4">
-                                    <h3 class="font-bold text-gray-800">Daftar Siswa Terdaftar</h3>
-                                    <select id="db-filter-class" onchange="renderStudentList()" class="text-sm border-gray-300 rounded border p-1">
-                                        <option value="all">Semua Kelas</option>
-                                        <option value="7A">7A</option><option value="7B">7B</option><option value="8A">8A</option><option value="9A">9A</option>
-                                        <!-- Add more as needed just for filter demo -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <form onsubmit="addBulkStudents(event)">
+                                <div class="mb-6 max-w-xs">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Kelas Target</label>
+                                    <select id="db-bulk-class" required class="w-full border-gray-300 rounded-lg shadow-sm p-2 border bg-white font-bold text-gray-700">
+                                        <option value="" disabled selected>-- Pilih Kelas --</option>
+                                        <option value="7A">7A (Putra)</option><option value="7B">7B (Putra)</option><option value="7C">7C (Putra)</option>
+                                        <option value="7D">7D (Putri)</option><option value="7E">7E (Putri)</option><option value="7F">7F (Putri)</option>
+                                        <option value="8A">8A (Putra)</option><option value="8B">8B (Putra)</option><option value="8C">8C (Putra)</option>
+                                        <option value="8D">8D (Putri)</option><option value="8E">8E (Putri)</option><option value="8F">8F (Putri)</option>
+                                        <option value="9A">9A (Putra)</option><option value="9B">9B (Putra)</option><option value="9C">9C (Putra)</option>
+                                        <option value="9D">9D (Putri)</option><option value="9E">9E (Putri)</option>
                                     </select>
                                 </div>
-                                <div class="overflow-y-auto h-96 pr-2">
-                                    <ul id="db-student-list" class="space-y-2">
-                                        <!-- List items injected by JS -->
-                                    </ul>
+
+                                <h4 class="text-sm font-bold text-gray-600 mb-3">Input Nama Siswa (30 Kolom)</h4>
+                                <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6" id="bulk-inputs">
+                                    <!-- Generated by JS -->
                                 </div>
-                            </div>
+
+                                <button type="submit" class="w-full md:w-auto px-8 bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">
+                                    <i class="fas fa-save mr-2"></i> Simpan Data ke Kelas
+                                </button>
+                            </form>
                         </div>
                     </section>
 
@@ -399,100 +408,104 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT LOGIC -->
     <script>
-        // --- 1. STATE MANAGEMENT ---
+        // --- STATE MANAGEMENT ---
         const state = {
-            user: null, // { name: '', class: '' }
+            user: null,
             currentTab: 'beranda',
-            // Updated Books to be External Links
             books: [
                 { id: 1, title: "SIBI", author: "Kemendikdasmen", category: "Portal Buku", color: "bg-blue-100", link: "https://buku.kemendikdasmen.go.id/" },
-                { id: 2, title: "Badan Pengembangan dan Pembinaan Bahasa", author: "Kemendikdasmen", category: "Portal Bahasa", color: "bg-green-100", link: "https://badanbahasa.kemendikdasmen.go.id/" },
+                { id: 2, title: "Badan Bahasa", author: "Kemendikdasmen", category: "Portal Bahasa", color: "bg-green-100", link: "https://badanbahasa.kemendikdasmen.go.id/" },
             ],
-            leaderboard: [
-                { name: "Ahmad Fulan", class: "9A", books: 24, points: 1200 },
-                { name: "Siti Aminah", class: "8B", books: 20, points: 980 },
-                { name: "Budi Santoso", class: "7A", books: 18, points: 850 },
-                { name: "Dewi Lestari", class: "9B", books: 15, points: 720 },
-                { name: "Rizky Ramadhan", class: "8A", books: 12, points: 600 },
-            ],
-            highlights: {
-                students: {
-                    male: { name: "Fatih Al-Ayyubi", class: "9A", books: 42 },
-                    female: { name: "Aisyah Humaira", class: "8B", books: 56 }
-                },
-                classes: {
-                    male: { name: "7A - Al-Fatih", total: 450 },
-                    female: { name: "9B - Averroes", total: 520 }
-                }
-            },
-            // NEW: Database Siswa (Contoh Data Awal)
+            // Data Siswa (Default 1 Dummy per kelas)
             studentData: {
-                "7A": ["Budi Santoso", "Andi Pratama", "Citra Lestari"],
-                "7B": ["Doni Kurniawan", "Eka Putri"],
-                "8A": ["Rizky Ramadhan", "Fajar Nugraha"],
-                "8B": ["Siti Aminah", "Gita Gutawa"],
-                "9A": ["Ahmad Fulan", "Fatih Al-Ayyubi"],
-                "9B": ["Dewi Lestari", "Aisyah Humaira"],
-                // Inisialisasi array kosong untuk kelas lain agar tidak error
-                "7C": [], "7D": [], "7E": [], "7F": [],
-                "8C": [], "8D": [], "8E": [], "8F": [],
-                "9C": [], "9D": [], "9E": []
-            }
+                // Putra
+                "7A": ["Siswa 7A"], "7B": ["Siswa 7B"], "7C": ["Siswa 7C"],
+                "8A": ["Siswa 8A"], "8B": ["Siswa 8B"], "8C": ["Siswa 8C"],
+                "9A": ["Siswa 9A"], "9B": ["Siswa 9B"], "9C": ["Siswa 9C"],
+                // Putri
+                "7D": ["Siswa 7D"], "7E": ["Siswa 7E"], "7F": ["Siswa 7F"],
+                "8D": ["Siswa 8D"], "8E": ["Siswa 8E"], "8F": ["Siswa 8F"],
+                "9D": ["Siswa 9D"], "9E": ["Siswa 9E"]
+            },
+            assessmentCategories: ["Pembaca Dini", "Pembaca Awal", "Pembaca Semenjana", "Pembaca Madya", "Pembaca Mahir"]
         };
 
-        // --- 2. INITIALIZATION ---
+        // --- INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', () => {
+            // Load Local Data
             const storedUser = localStorage.getItem('albannaUser');
-            // Check localStorage for student data updates
             const storedDB = localStorage.getItem('albannaStudents');
-            if (storedDB) {
-                state.studentData = JSON.parse(storedDB);
-            }
-
+            if (storedDB) state.studentData = JSON.parse(storedDB);
+            
             if (storedUser) {
                 state.user = JSON.parse(storedUser);
                 showDashboard();
+                updateDashboardGreeting(); 
             }
+
             renderBooks();
-            renderLeaderboard();
-            renderHighlights(); 
-            initChart();
+            generateBulkInputs();
+            
+            // Listen for Firebase Ready to setup Realtime Listeners
+            window.addEventListener('firebase-ready', () => {
+                setupRealtimeListeners();
+            });
         });
 
-        // --- 3. LOGIN & DROPDOWN LOGIC ---
+        // --- 30 COLUMNS GENERATOR ---
+        function generateBulkInputs() {
+            const container = document.getElementById('bulk-inputs');
+            container.innerHTML = '';
+            for(let i=1; i<=30; i++) {
+                container.innerHTML += `<input type="text" name="student_${i}" placeholder="Siswa ${i}" class="border border-gray-300 rounded p-2 text-sm focus:border-green-500 focus:outline-none">`;
+            }
+        }
+
+        // --- BULK ADD STUDENT ---
+        function addBulkStudents(e) {
+            e.preventDefault();
+            const form = e.target;
+            const targetClass = document.getElementById('db-bulk-class').value;
+            
+            if(!targetClass) { alert("Pilih kelas terlebih dahulu!"); return; }
+
+            if (!state.studentData[targetClass]) state.studentData[targetClass] = [];
+            
+            let count = 0;
+            const inputs = form.querySelectorAll('input[type="text"]');
+            inputs.forEach(input => {
+                if(input.value.trim() !== "") {
+                    state.studentData[targetClass].push(input.value.trim());
+                    input.value = ""; // Clear input
+                    count++;
+                }
+            });
+
+            localStorage.setItem('albannaStudents', JSON.stringify(state.studentData));
+            alert(`Berhasil menambahkan ${count} siswa ke kelas ${targetClass}`);
+        }
+
+        // --- LOGIN LOGIC ---
         function populateStudentNames() {
             const classSelect = document.getElementById('input-class');
             const nameSelect = document.getElementById('input-name');
             const selectedClass = classSelect.value;
-
-            // Reset Name Dropdown
             nameSelect.innerHTML = '<option value="" disabled selected>-- Pilih Nama --</option>';
             
             if (selectedClass && state.studentData[selectedClass]) {
                 const students = state.studentData[selectedClass];
-                
-                if (students.length > 0) {
-                    students.forEach(name => {
-                        const option = document.createElement('option');
-                        option.value = name;
-                        option.textContent = name;
-                        nameSelect.appendChild(option);
-                    });
-                    nameSelect.disabled = false;
-                    nameSelect.classList.remove('bg-gray-100', 'cursor-not-allowed');
-                    nameSelect.classList.add('bg-white');
-                } else {
+                students.forEach(name => {
                     const option = document.createElement('option');
-                    option.textContent = "Belum ada data siswa";
+                    option.value = name;
+                    option.textContent = name;
                     nameSelect.appendChild(option);
-                    nameSelect.disabled = true;
-                }
+                });
+                nameSelect.disabled = false;
+                nameSelect.classList.remove('bg-gray-100', 'cursor-not-allowed');
+                nameSelect.classList.add('bg-white');
             } else {
                 nameSelect.disabled = true;
-                nameSelect.classList.add('bg-gray-100', 'cursor-not-allowed');
-                nameSelect.classList.remove('bg-white');
             }
         }
 
@@ -500,36 +513,20 @@
             e.preventDefault();
             const kelas = document.getElementById('input-class').value;
             const name = document.getElementById('input-name').value;
-
             if(name && kelas) {
                 state.user = { name, kelas };
                 localStorage.setItem('albannaUser', JSON.stringify(state.user));
-                
-                const btn = e.target.querySelector('button');
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memuat...';
-                
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                    showDashboard();
-                }, 800);
-            } else {
-                alert('Mohon pilih Kelas dan Nama siswa.');
+                showDashboard();
             }
         }
 
         function handleLogout() {
-            if(confirm('Apakah kamu yakin ingin keluar?')) {
+            if(confirm('Keluar dari portal?')) {
                 localStorage.removeItem('albannaUser');
                 state.user = null;
                 document.getElementById('dashboard-view').classList.add('hidden');
                 document.getElementById('login-view').classList.remove('hidden');
                 document.getElementById('login-form').reset();
-                // Reset dropdown state
-                const nameSelect = document.getElementById('input-name');
-                nameSelect.innerHTML = '<option value="" disabled selected>-- Pilih Kelas Terlebih Dahulu --</option>';
-                nameSelect.disabled = true;
-                nameSelect.classList.add('bg-gray-100', 'cursor-not-allowed');
             }
         }
 
@@ -537,123 +534,125 @@
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('dashboard-view').classList.remove('hidden');
             document.getElementById('dashboard-view').classList.add('flex');
-
+            
             document.getElementById('display-name').textContent = state.user.name;
             document.getElementById('welcome-name').textContent = state.user.name.split(' ')[0];
             document.getElementById('display-class').textContent = state.user.kelas;
-            
             const initials = state.user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
             document.getElementById('user-avatar').textContent = initials;
-
+            
             switchTab('beranda');
+            updateDashboardGreeting();
         }
 
-        // --- 4. NAVIGATION & DATABASE LOGIC ---
         function switchTab(tabName) {
-            state.currentTab = tabName;
-            ['beranda', 'koleksi', 'jurnal', 'peringkat', 'database'].forEach(view => {
+            ['beranda', 'asesmen', 'kategori', 'koleksi', 'jurnal', 'database'].forEach(view => {
                 const el = document.getElementById(`view-${view}`);
                 if(el) el.classList.add('hidden');
-                
                 const nav = document.getElementById(`nav-${view}`);
                 if(nav) {
                     nav.classList.remove('bg-green-50', 'text-green-700');
                     nav.classList.add('text-gray-600');
-                    // Reset styling khusus untuk database button jika ada
-                    if(view === 'database') nav.classList.add('hover:text-red-600'); 
                 }
             });
-
             document.getElementById(`view-${tabName}`).classList.remove('hidden');
-            
             const activeNav = document.getElementById(`nav-${tabName}`);
             if(activeNav) {
                 activeNav.classList.remove('text-gray-600');
                 activeNav.classList.add('bg-green-50', 'text-green-700');
             }
-            document.getElementById('main-scroll').scrollTop = 0;
         }
 
-        // NEW: Database Access Security
-        function accessDatabase() {
-            const password = prompt("Masukkan Password Admin untuk mengakses Database:", "");
-            if (password === "admin123") {
-                switchTab('database');
-                renderStudentList();
-            } else {
-                alert("Password salah! Akses ditolak.");
-            }
-        }
-
-        // NEW: Add Student Logic
-        function addStudent(e) {
+        // --- ASESMEN LOGIC (FIREBASE) ---
+        async function submitAssessment(e) {
             e.preventDefault();
-            const kelas = document.getElementById('db-input-class').value;
-            const name = document.getElementById('db-input-name').value;
+            const s1 = parseInt(document.getElementById('q1').value);
+            const s2 = parseInt(document.getElementById('q2').value);
+            const s3 = parseInt(document.getElementById('q3').value);
+            
+            // Simple Logic for Level
+            const total = s1 + s2 + s3;
+            let categoryIndex = 0;
+            // Max score 12 (4+4+4), Min 3
+            if (total <= 4) categoryIndex = 0; // Dini
+            else if (total <= 6) categoryIndex = 1; // Awal
+            else if (total <= 8) categoryIndex = 2; // Semenjana
+            else if (total <= 10) categoryIndex = 3; // Madya
+            else categoryIndex = 4; // Mahir
 
-            if (kelas && name) {
-                if (!state.studentData[kelas]) state.studentData[kelas] = [];
-                state.studentData[kelas].push(name);
-                
-                // Simpan ke localStorage agar permanen (di browser ini)
-                localStorage.setItem('albannaStudents', JSON.stringify(state.studentData));
+            const category = state.assessmentCategories[categoryIndex];
+            document.getElementById('result-category').textContent = category;
+            document.getElementById('assessment-result').classList.remove('hidden');
 
-                alert(`Berhasil menambahkan ${name} ke kelas ${kelas}`);
-                document.getElementById('db-input-name').value = '';
-                renderStudentList();
+            // Save to Firebase
+            if (window.db && state.user) {
+                try {
+                    const docId = `${state.user.kelas}_${state.user.name.replace(/\s+/g, '_')}`;
+                    await window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'assessments', docId), {
+                        name: state.user.name,
+                        class: state.user.kelas,
+                        category: category,
+                        timestamp: new Date().toISOString()
+                    });
+                    updateDashboardGreeting(category);
+                } catch (err) {
+                    console.error("Firebase save failed", err);
+                    alert("Gagal menyimpan ke cloud, pastikan koneksi internet lancar.");
+                }
+            } else {
+                // Local fallback simulation
+                localStorage.setItem(`assessment_${state.user.name}`, category);
+                updateDashboardGreeting(category);
+                alert("Mode Offline: Data disimpan di browser.");
             }
         }
 
-        // NEW: Render Student List in Admin View
-        function renderStudentList() {
-            const filterClass = document.getElementById('db-filter-class').value;
-            const listContainer = document.getElementById('db-student-list');
-            listContainer.innerHTML = '';
+        // --- DASHBOARD GREETING ---
+        async function updateDashboardGreeting(manualCategory = null) {
+            const greetingEl = document.getElementById('assessment-greeting');
+            let category = manualCategory;
 
-            let classesToShow = [];
-            if (filterClass === 'all') {
-                classesToShow = Object.keys(state.studentData).sort();
-            } else {
-                classesToShow = [filterClass];
+            if (!category && window.db && state.user) {
+                // Fetch from Firebase logic would go here via listener, but for now we wait for user action or local cache
+                // Simulating fetch or checking local cache for immediate display
+                category = localStorage.getItem(`assessment_${state.user.name}`); 
             }
 
-            classesToShow.forEach(cls => {
-                const students = state.studentData[cls] || [];
-                students.forEach(student => {
-                    const li = document.createElement('li');
-                    li.className = "flex justify-between items-center bg-gray-50 p-3 rounded border border-gray-100";
-                    li.innerHTML = `
-                        <div>
-                            <span class="font-medium text-gray-800">${student}</span>
-                            <span class="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">${cls}</span>
-                        </div>
-                        <i class="fas fa-user text-gray-300"></i>
-                    `;
-                    listContainer.appendChild(li);
+            if (category) {
+                greetingEl.innerHTML = `Halo, kamu <b>${category}</b>! Pertahankan semangat membacamu ya.`;
+            } else {
+                greetingEl.innerHTML = `Kamu belum melakukan asesmen. Yuk cek level membaca kamu sekarang!`;
+            }
+        }
+
+        // --- REALTIME CATEGORY VIEW ---
+        function setupRealtimeListeners() {
+            if (!window.db) return;
+            
+            // Listen to ALL assessments
+            const q = window.query(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'assessments'));
+            
+            window.onSnapshot(q, (snapshot) => {
+                // Reset Lists
+                document.getElementById('list-dini').innerHTML = '';
+                document.getElementById('list-awal').innerHTML = '';
+                document.getElementById('list-semenjana').innerHTML = '';
+                document.getElementById('list-madya').innerHTML = '';
+                document.getElementById('list-mahir').innerHTML = '';
+
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const li = `<li class="border-b border-gray-100 pb-1 flex justify-between">
+                        <span>${data.name}</span> <span class="text-xs bg-gray-100 rounded px-1">${data.class}</span>
+                    </li>`;
+                    
+                    if (data.category === "Pembaca Dini") document.getElementById('list-dini').innerHTML += li;
+                    else if (data.category === "Pembaca Awal") document.getElementById('list-awal').innerHTML += li;
+                    else if (data.category === "Pembaca Semenjana") document.getElementById('list-semenjana').innerHTML += li;
+                    else if (data.category === "Pembaca Madya") document.getElementById('list-madya').innerHTML += li;
+                    else if (data.category === "Pembaca Mahir") document.getElementById('list-mahir').innerHTML += li;
                 });
             });
-            
-            if(listContainer.innerHTML === '') {
-                listContainer.innerHTML = '<p class="text-center text-gray-400 py-4">Tidak ada data siswa untuk ditampilkan.</p>';
-            }
-        }
-
-        // --- 5. RENDER FUNCTIONS (EXISTING) ---
-        function renderHighlights() {
-            const h = state.highlights;
-            document.getElementById('top-student-male-name').textContent = h.students.male.name;
-            document.getElementById('top-student-male-class').textContent = h.students.male.class;
-            document.getElementById('top-student-male-books').textContent = h.students.male.books;
-
-            document.getElementById('top-student-female-name').textContent = h.students.female.name;
-            document.getElementById('top-student-female-class').textContent = h.students.female.class;
-            document.getElementById('top-student-female-books').textContent = h.students.female.books;
-
-            document.getElementById('top-class-male-name').textContent = h.classes.male.name;
-            document.getElementById('top-class-male-total').textContent = h.classes.male.total;
-
-            document.getElementById('top-class-female-name').textContent = h.classes.female.name;
-            document.getElementById('top-class-female-total').textContent = h.classes.female.total;
         }
 
         function renderBooks() {
@@ -670,21 +669,10 @@
             `).join('');
         }
 
-        function renderLeaderboard() {
-            const tbody = document.getElementById('leaderboard-body');
-            tbody.innerHTML = state.leaderboard.map((student, index) => `
-                <tr class="hover:bg-gray-50 transition">
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        ${index === 0 ? '<i class="fas fa-crown text-yellow-500"></i>' : 
-                          index === 1 ? '<i class="fas fa-medal text-gray-400"></i>' : 
-                          index === 2 ? '<i class="fas fa-medal text-orange-400"></i>' : index + 1}
-                    </td>
-                    <td class="px-6 py-4 font-medium text-gray-900">${student.name}</td>
-                    <td class="px-6 py-4 text-gray-500">${student.class}</td>
-                    <td class="px-6 py-4 text-center text-green-600 font-bold">${student.books}</td>
-                    <td class="px-6 py-4 text-center font-bold text-gray-700">${student.points} pts</td>
-                </tr>
-            `).join('');
+        function accessDatabase() {
+            const password = prompt("Masukkan Password Admin:", "");
+            if (password === "admin123") switchTab('database');
+            else alert("Akses ditolak.");
         }
 
         function submitJournal(e) {
@@ -692,44 +680,6 @@
             alert('Jurnal berhasil dikirim! Terima kasih sudah membaca.');
             e.target.reset();
             switchTab('beranda');
-        }
-
-        function setRating(val) {
-            const stars = document.getElementById('star-rating').children;
-            for(let i=0; i<5; i++) {
-                if(i < val) {
-                    stars[i].classList.remove('text-gray-300');
-                    stars[i].classList.add('text-yellow-400');
-                } else {
-                    stars[i].classList.remove('text-yellow-400');
-                    stars[i].classList.add('text-gray-300');
-                }
-            }
-        }
-
-        function initChart() {
-            const ctx = document.getElementById('readChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
-                    datasets: [{
-                        label: 'Halaman Dibaca',
-                        data: [12, 19, 3, 25, 15, 40, 30],
-                        backgroundColor: '#10B981',
-                        borderRadius: 5
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, grid: { display: false } },
-                        x: { grid: { display: false } }
-                    }
-                }
-            });
         }
     </script>
 </body>
