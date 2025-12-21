@@ -43,11 +43,9 @@
                     window.query = query;
                     
                     console.log("Firebase initialized");
-                    
-                    // Trigger custom event so main app knows Firebase is ready
                     window.dispatchEvent(new Event('firebase-ready'));
                 } else {
-                    console.warn("Firebase config not found. Running in local mode (Assessment saving will simulate).");
+                    console.warn("Firebase config not found. Running in local mode.");
                 }
             } catch (e) {
                 console.error("Firebase init error:", e);
@@ -69,13 +67,6 @@
         ::-webkit-scrollbar-thumb { background: #10B981; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #059669; }
         .glass-effect { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-        
-        /* Category Badges */
-        .badge-dini { background-color: #fee2e2; color: #991b1b; }
-        .badge-awal { background-color: #ffedd5; color: #9a3412; }
-        .badge-semenjana { background-color: #fef9c3; color: #854d0e; }
-        .badge-madya { background-color: #dcfce7; color: #166534; }
-        .badge-mahir { background-color: #dbeafe; color: #1e40af; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 h-screen overflow-hidden">
@@ -216,14 +207,12 @@
                     
                     <!-- 1. BERANDA VIEW -->
                     <section id="view-beranda" class="space-y-6 fade-in">
-                        <!-- Welcome Banner with Dynamic Category -->
                         <div class="bg-gradient-to-r from-green-600 to-teal-600 rounded-2xl p-6 md:p-10 text-white shadow-lg relative overflow-hidden">
                             <div class="absolute right-0 top-0 opacity-10 transform translate-x-10 -translate-y-10">
                                 <i class="fas fa-book text-9xl"></i>
                             </div>
                             <h2 class="text-2xl md:text-3xl font-bold mb-2">Ahlan Wa Sahlan, <span id="welcome-name">Siswa</span>! 👋</h2>
                             <p id="assessment-greeting" class="text-green-100 max-w-lg mb-4 text-lg">
-                                <!-- Will be filled by JS based on assessment -->
                                 Yuk mulai petualangan membaca kamu!
                             </p>
                             <div class="mt-6 flex gap-3">
@@ -241,95 +230,65 @@
                                     <span class="bg-yellow-100 text-yellow-600 w-8 h-8 rounded-full flex items-center justify-center text-sm"><i class="fas fa-crown"></i></span>
                                     Siswa Aktif Literasi
                                 </h3>
-                                <p class="text-gray-400 text-sm italic text-center py-4">Data statistik belum tersedia.</p>
+                                <div id="dashboard-active-students" class="text-gray-400 text-sm italic text-center py-4">Data belum tersedia.</div>
                             </div>
                             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                                 <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
                                     <span class="bg-orange-100 text-orange-600 w-8 h-8 rounded-full flex items-center justify-center text-sm"><i class="fas fa-trophy"></i></span>
                                     Kelas Aktif Literasi
                                 </h3>
-                                <p class="text-gray-400 text-sm italic text-center py-4">Data statistik belum tersedia.</p>
+                                <div id="dashboard-active-classes" class="text-gray-400 text-sm italic text-center py-4">Data belum tersedia.</div>
                             </div>
                         </div>
                     </section>
 
-                    <!-- 2. ASESMEN VIEW (NEW) -->
-                    <section id="view-asesmen" class="hidden fade-in max-w-2xl mx-auto">
+                    <!-- 2. ASESMEN VIEW (LENGKAP) -->
+                    <section id="view-asesmen" class="hidden fade-in max-w-4xl mx-auto">
                         <div class="text-center mb-8">
-                            <h2 class="text-2xl font-bold text-gray-800">Asesmen Literasi</h2>
-                            <p class="text-gray-500">Jawab pertanyaan berikut untuk mengetahui kategori membaca kamu.</p>
+                            <h2 class="text-2xl font-bold text-gray-800">Asesmen Literasi Membaca</h2>
+                            <p class="text-gray-500">Jawablah pertanyaan berikut dengan jujur untuk mengetahui level membaca kamu.</p>
                         </div>
                         
                         <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
-                            <form onsubmit="submitAssessment(event)" class="space-y-6">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">1. Berapa banyak buku yang kamu baca dalam sebulan terakhir?</label>
-                                    <select id="q1" class="w-full border-gray-300 rounded-lg p-2 border">
-                                        <option value="1">Belum ada / Kurang dari 1</option>
-                                        <option value="2">1-2 Buku</option>
-                                        <option value="3">3-5 Buku</option>
-                                        <option value="4">Lebih dari 5 Buku</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">2. Jenis buku apa yang paling sering kamu baca?</label>
-                                    <select id="q2" class="w-full border-gray-300 rounded-lg p-2 border">
-                                        <option value="1">Komik bergambar sedikit teks</option>
-                                        <option value="2">Cerita pendek / Majalah</option>
-                                        <option value="3">Novel remaja / Fiksi</option>
-                                        <option value="4">Buku non-fiksi / Pengetahuan berat</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">3. Apakah kamu paham isi buku yang kamu baca?</label>
-                                    <select id="q3" class="w-full border-gray-300 rounded-lg p-2 border">
-                                        <option value="1">Sering bingung</option>
-                                        <option value="2">Paham sebagian besar</option>
-                                        <option value="3">Sangat paham dan bisa menceritakan ulang</option>
-                                        <option value="4">Paham dan bisa mengkritisi isi buku</option>
-                                    </select>
-                                </div>
-                                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">
-                                    Lihat Hasil & Simpan <i class="fas fa-save ml-2"></i>
-                                </button>
+                            <form onsubmit="submitAssessment(event)" class="space-y-8" id="assessment-form">
+                                <!-- Konten Asesmen akan di-render oleh JS -->
                             </form>
-                            <div id="assessment-result" class="hidden mt-6 p-4 rounded-lg bg-green-50 border border-green-200 text-center">
-                                <p class="text-gray-600">Selamat! Kategori kamu adalah:</p>
-                                <h3 class="text-2xl font-bold text-green-700 mt-2" id="result-category">...</h3>
-                                <p class="text-xs text-gray-500 mt-2">Data telah disimpan ke database.</p>
+                            
+                            <div id="assessment-result" class="hidden mt-8 p-6 rounded-xl bg-green-50 border border-green-200 text-center relative overflow-hidden">
+                                <div class="absolute top-0 right-0 p-4 opacity-10"><i class="fas fa-certificate text-6xl text-green-700"></i></div>
+                                <h3 class="text-lg font-semibold text-gray-600">Hasil Asesmen Kamu</h3>
+                                <div class="text-5xl font-bold text-green-600 my-4" id="result-score">0/12</div>
+                                <p class="text-gray-600">Selamat! Kategori Membaca kamu adalah:</p>
+                                <h2 class="text-3xl font-bold text-green-800 mt-2 uppercase tracking-wide" id="result-category">...</h2>
+                                <p class="text-sm text-gray-500 mt-4 bg-white inline-block px-4 py-1 rounded-full shadow-sm"><i class="fas fa-check-circle text-green-500 mr-1"></i> Data telah disimpan ke database.</p>
                             </div>
                         </div>
                     </section>
 
-                    <!-- 3. KATEGORI (PETA LITERASI) VIEW (NEW) -->
+                    <!-- 3. KATEGORI (PETA LITERASI) VIEW -->
                     <section id="view-kategori" class="hidden fade-in">
                         <h2 class="text-2xl font-bold text-gray-800 mb-6">Peta Literasi Sekolah</h2>
                         
                         <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                            <!-- Column 1: Dini -->
-                            <div class="bg-white p-4 rounded-xl border-t-4 border-red-200 shadow-sm">
-                                <h3 class="font-bold text-gray-700 text-center mb-4">Pembaca Dini</h3>
-                                <ul id="list-dini" class="space-y-2 text-sm text-gray-600"></ul>
+                            <div class="bg-white p-4 rounded-xl border-t-4 border-red-200 shadow-sm min-h-[200px]">
+                                <h3 class="font-bold text-gray-700 text-center mb-4 text-sm uppercase">Pembaca Dini</h3>
+                                <ul id="list-dini" class="space-y-2 text-xs text-gray-600"></ul>
                             </div>
-                            <!-- Column 2: Awal -->
-                            <div class="bg-white p-4 rounded-xl border-t-4 border-orange-200 shadow-sm">
-                                <h3 class="font-bold text-gray-700 text-center mb-4">Pembaca Awal</h3>
-                                <ul id="list-awal" class="space-y-2 text-sm text-gray-600"></ul>
+                            <div class="bg-white p-4 rounded-xl border-t-4 border-orange-200 shadow-sm min-h-[200px]">
+                                <h3 class="font-bold text-gray-700 text-center mb-4 text-sm uppercase">Pembaca Awal</h3>
+                                <ul id="list-awal" class="space-y-2 text-xs text-gray-600"></ul>
                             </div>
-                            <!-- Column 3: Semenjana -->
-                            <div class="bg-white p-4 rounded-xl border-t-4 border-yellow-200 shadow-sm">
-                                <h3 class="font-bold text-gray-700 text-center mb-4">Pembaca Semenjana</h3>
-                                <ul id="list-semenjana" class="space-y-2 text-sm text-gray-600"></ul>
+                            <div class="bg-white p-4 rounded-xl border-t-4 border-yellow-200 shadow-sm min-h-[200px]">
+                                <h3 class="font-bold text-gray-700 text-center mb-4 text-sm uppercase">Pembaca Semenjana</h3>
+                                <ul id="list-semenjana" class="space-y-2 text-xs text-gray-600"></ul>
                             </div>
-                            <!-- Column 4: Madya -->
-                            <div class="bg-white p-4 rounded-xl border-t-4 border-green-200 shadow-sm">
-                                <h3 class="font-bold text-gray-700 text-center mb-4">Pembaca Madya</h3>
-                                <ul id="list-madya" class="space-y-2 text-sm text-gray-600"></ul>
+                            <div class="bg-white p-4 rounded-xl border-t-4 border-green-200 shadow-sm min-h-[200px]">
+                                <h3 class="font-bold text-gray-700 text-center mb-4 text-sm uppercase">Pembaca Madya</h3>
+                                <ul id="list-madya" class="space-y-2 text-xs text-gray-600"></ul>
                             </div>
-                            <!-- Column 5: Mahir -->
-                            <div class="bg-white p-4 rounded-xl border-t-4 border-blue-200 shadow-sm">
-                                <h3 class="font-bold text-gray-700 text-center mb-4">Pembaca Mahir</h3>
-                                <ul id="list-mahir" class="space-y-2 text-sm text-gray-600"></ul>
+                            <div class="bg-white p-4 rounded-xl border-t-4 border-blue-200 shadow-sm min-h-[200px]">
+                                <h3 class="font-bold text-gray-700 text-center mb-4 text-sm uppercase">Pembaca Mahir</h3>
+                                <ul id="list-mahir" class="space-y-2 text-xs text-gray-600"></ul>
                             </div>
                         </div>
                     </section>
@@ -339,9 +298,7 @@
                         <div class="flex justify-between items-center mb-6">
                             <h2 class="text-2xl font-bold text-gray-800">Tautan Literasi Eksternal</h2>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="book-grid">
-                            <!-- External Links -->
-                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="book-grid"></div>
                     </section>
 
                     <!-- 5. JURNAL VIEW -->
@@ -392,9 +349,7 @@
                                 </div>
 
                                 <h4 class="text-sm font-bold text-gray-600 mb-3">Input Nama Siswa (30 Kolom)</h4>
-                                <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6" id="bulk-inputs">
-                                    <!-- Generated by JS -->
-                                </div>
+                                <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6" id="bulk-inputs"></div>
 
                                 <button type="submit" class="w-full md:w-auto px-8 bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">
                                     <i class="fas fa-save mr-2"></i> Simpan Data ke Kelas
@@ -409,7 +364,7 @@
     </div>
 
     <script>
-        // --- STATE MANAGEMENT ---
+        // --- DATA & STATE ---
         const state = {
             user: null,
             currentTab: 'beranda',
@@ -428,12 +383,61 @@
                 "8D": ["Siswa 8D"], "8E": ["Siswa 8E"], "8F": ["Siswa 8F"],
                 "9D": ["Siswa 9D"], "9E": ["Siswa 9E"]
             },
-            assessmentCategories: ["Pembaca Dini", "Pembaca Awal", "Pembaca Semenjana", "Pembaca Madya", "Pembaca Mahir"]
+            // SOAL ASESMEN LITERASI (12 Soal)
+            assessmentData: [
+                {
+                    textTitle: "Kerupuk, Pelengkap Makanan yang Mendunia",
+                    textContent: "Kerupuk merupakan makanan yang sangat populer di Indonesia. Konon, kerupuk sudah ada di Nusantara sejak abad ke-9 dan ke-10, terbukti dari prasasti kuno. Kerupuk kini bukan hanya makanan rakyat, tetapi juga komoditas ekspor yang mendunia, dikirim hingga puluhan ribu kilogram ke luar negeri.",
+                    questions: [
+                        { id: 1, q: "Berdasarkan informasi umum, manakah fakta yang paling tepat mengenai keberadaan kerupuk?", options: ["Kerupuk sudah ada di Nusantara sejak abad ke-9 dan ke-10.", "Kerupuk baru diperkenalkan oleh pedagang Eropa abad ke-18.", "Kerupuk hanya boleh dikonsumsi raja.", "Kerupuk ditemukan masa kemerdekaan."], correct: 0 },
+                        { id: 2, q: "Apa fungsi utama gambar bermacam-macam kerupuk dalam infografik?", options: ["Memberikan gambaran visual ragam jenis kerupuk.", "Memenuhi ruang kosong.", "Panduan resep masak.", "Membuktikan kerupuk mahal."], correct: 0 }
+                    ]
+                },
+                {
+                    textTitle: "Air Putih atau Air Mineral?",
+                    textContent: "Walaupun wujud, warna, dan rasanya cenderung mirip, air mineral dan air putih tidaklah sama. Menurut segi sumber, proses pengolahan, maupun kandungan, keduanya memiliki perbedaan yang jelas.",
+                    questions: [
+                        { id: 3, q: "Manakah pernyataan yang paling tepat mengenai perbedaan keduanya?", options: ["Keduanya berbeda dari segi sumber, proses pengolahan, dan kandungan.", "Istilah yang sama persis.", "Bedanya hanya di kemasan.", "Air mineral tidak boleh dimasak."], correct: 0 }
+                    ]
+                },
+                {
+                    textTitle: "Antre, Dong!",
+                    textContent: "Tia dan Devi sedang mengantre di kasir. Tiba-tiba seorang pemuda menyerobot. Ibu di belakangnya menegur, tapi pemuda itu beralasan buru-buru. Tia ikut menegur dengan sopan namun tegas. Akhirnya Pak Satpam datang menyelesaikan keributan dan meminta pemuda itu antre.",
+                    questions: [
+                        { id: 4, q: "Siapakah tokoh yang akhirnya turun tangan menyelesaikan keributan?", options: ["Pak Satpam", "Kasir", "Ibu pengantre", "Tia"], correct: 0 },
+                        { id: 5, q: "Bagaimana perbedaan watak antara Tia dan pemuda tersebut?", options: ["Tia berani mengingatkan aturan, pemuda itu egois.", "Tia pemalu, pemuda disiplin.", "Tia acuh, pemuda darurat.", "Tia pemarah, pemuda sabar."], correct: 0 }
+                    ]
+                },
+                {
+                    textTitle: "Aduh, Panas!",
+                    textContent: "Ani terkena setrika panas. Kak Dita segera mengambil pelepah lidah buaya dan mengoleskan getahnya. Kak Dita menjelaskan bahwa getah lidah buaya mengandung glukomanan yang mendorong regenerasi sel dan kolagen untuk menyembuhkan luka serta memberi sensasi dingin.",
+                    questions: [
+                        { id: 6, q: "Mengapa Kak Dita menggunakan getah lidah buaya?", options: ["Mengandung senyawa penyembuh luka dan sensasi dingin.", "Satu-satunya tanaman di kebun.", "Tidak punya kotak P3K.", "Ani meminta herbal."], correct: 0 },
+                        { id: 7, q: "Apa kandungan lidah buaya yang merangsang pertumbuhan kulit baru?", options: ["Senyawa glukomanan dan kolagen", "Vitamin C dan Zat Besi", "Kalsium dan Protein", "Air dan Mineral"], correct: 0 }
+                    ]
+                },
+                {
+                    textTitle: "Melihat Orang Kejang? Jangan Panik",
+                    textContent: "Saat menolong orang kejang, hal terpenting adalah jangan panik. Kepanikan bisa membuat kita melakukan tindakan gegabah yang membahayakan korban.",
+                    questions: [
+                        { id: 8, q: "Mengapa kepanikan harus dihindari saat menolong?", options: ["Agar dapat berpikir jernih dan tidak membahayakan korban.", "Karena panik itu menular.", "Supaya tidak jadi tontonan.", "Karena akan didenda."], correct: 0 }
+                    ]
+                },
+                {
+                    textTitle: "Salah Kira",
+                    textContent: "Rania bangun pukul 6 pagi dan panik karena mengira terlambat sekolah (masuk jam 7). Ia buru-buru bersiap, melupakan buku gambar karena mengira hari Senin. Sampai di sekolah, gerbang tutup. Pak Gino memberitahu ini hari Minggu. Rania salah mengira hari.",
+                    questions: [
+                        { id: 9, q: "Peristiwa apa yang membuat Rania terkejut di sekolah?", options: ["Gerbang tutup karena hari Minggu.", "Lupa buku gambar.", "Terlambat.", "Tas tertinggal."], correct: 0 },
+                        { id: 10, q: "Mengapa Rania terburu-buru bangun?", options: ["Melihat jam pukul 6 dan mengira terlambat.", "Disuruh Ibu.", "Jam mati.", "Dijemput teman."], correct: 0 },
+                        { id: 11, q: "Barang apa yang dilihat Rania tapi TIDAK dibawa?", options: ["Buku gambar", "Kotak pensil", "Buku pelajaran", "Seragam"], correct: 0 },
+                        { id: 12, q: "Apa pelajaran dari cerita ini?", options: ["Pentingnya memeriksa jadwal/hari sebelum terburu-buru.", "Harus bangun jam 5.", "Jangan dengar orang tua.", "Sekolah harus buka tiap hari."], correct: 0 }
+                    ]
+                }
+            ]
         };
 
-        // --- INITIALIZATION ---
+        // --- INIT ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Load Local Data
             const storedUser = localStorage.getItem('albannaUser');
             const storedDB = localStorage.getItem('albannaStudents');
             if (storedDB) state.studentData = JSON.parse(storedDB);
@@ -441,19 +445,163 @@
             if (storedUser) {
                 state.user = JSON.parse(storedUser);
                 showDashboard();
-                updateDashboardGreeting(); 
             }
 
             renderBooks();
             generateBulkInputs();
+            renderAssessmentForm(); // New render function
             
-            // Listen for Firebase Ready to setup Realtime Listeners
             window.addEventListener('firebase-ready', () => {
                 setupRealtimeListeners();
             });
         });
 
-        // --- 30 COLUMNS GENERATOR ---
+        // --- FUNCTIONS ---
+        function renderAssessmentForm() {
+            const form = document.getElementById('assessment-form');
+            form.innerHTML = state.assessmentData.map((section, idx) => `
+                <div class="border-b border-gray-200 pb-6 mb-6">
+                    <h3 class="font-bold text-lg text-green-700 mb-2">${section.textTitle}</h3>
+                    <p class="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg mb-4 italic leading-relaxed">"${section.textContent}"</p>
+                    <div class="space-y-4">
+                        ${section.questions.map(q => `
+                            <div>
+                                <p class="font-medium text-gray-800 mb-2 text-sm">${q.id}. ${q.q}</p>
+                                <div class="grid grid-cols-1 gap-2">
+                                    ${q.options.map((opt, optIdx) => `
+                                        <label class="flex items-center space-x-3 p-3 border rounded-lg hover:bg-green-50 cursor-pointer transition">
+                                            <input type="radio" name="q${q.id}" value="${optIdx}" required class="text-green-600 focus:ring-green-500">
+                                            <span class="text-sm text-gray-700">${opt}</span>
+                                        </label>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('') + `
+                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition transform hover:-translate-y-1 shadow-lg">
+                    <i class="fas fa-paper-plane mr-2"></i> Kirim Jawaban & Lihat Hasil
+                </button>
+            `;
+        }
+
+        async function submitAssessment(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            let score = 0;
+            let totalQuestions = 0;
+
+            // Calculate Score
+            state.assessmentData.forEach(section => {
+                section.questions.forEach(q => {
+                    totalQuestions++;
+                    const answer = formData.get(`q${q.id}`);
+                    if (parseInt(answer) === q.correct) {
+                        score++;
+                    }
+                });
+            });
+
+            // Determine Category
+            let category = "";
+            if (score <= 3) category = "Pembaca Dini";
+            else if (score <= 5) category = "Pembaca Awal";
+            else if (score <= 8) category = "Pembaca Semenjana";
+            else if (score <= 10) category = "Pembaca Madya";
+            else category = "Pembaca Mahir";
+
+            // UI Updates
+            document.getElementById('result-score').textContent = `${score}/${totalQuestions}`;
+            document.getElementById('result-category').textContent = category;
+            
+            const resultDiv = document.getElementById('assessment-result');
+            resultDiv.classList.remove('hidden');
+            resultDiv.scrollIntoView({ behavior: 'smooth' });
+            
+            // Save to Cloud
+            if (window.db && state.user) {
+                try {
+                    const docId = `${state.user.kelas}_${state.user.name.replace(/\s+/g, '_')}`;
+                    await window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'assessments', docId), {
+                        name: state.user.name,
+                        class: state.user.kelas,
+                        category: category,
+                        score: score,
+                        timestamp: new Date().toISOString()
+                    });
+                    updateDashboardGreeting(category);
+                } catch (err) {
+                    console.error("Save failed", err);
+                }
+            } else {
+                localStorage.setItem(`assessment_${state.user.name}`, category);
+                updateDashboardGreeting(category);
+            }
+        }
+
+        // --- DASHBOARD & LISTS ---
+        function updateDashboardGreeting(manualCategory = null) {
+            const greetingEl = document.getElementById('assessment-greeting');
+            let category = manualCategory;
+            if (!category && window.db) return; // Wait for listener
+            
+            // Fallback for local storage if offline
+            if (!category) category = localStorage.getItem(`assessment_${state.user.name}`);
+
+            if (category) {
+                greetingEl.innerHTML = `Halo, kamu adalah <b>${category}</b>! <br><span class="text-sm opacity-90">Teruslah membaca untuk meningkatkan levelmu.</span>`;
+            } else {
+                greetingEl.innerHTML = `Kamu belum melakukan asesmen. Yuk cek level membaca kamu sekarang!`;
+            }
+        }
+
+        function setupRealtimeListeners() {
+            if (!window.db) return;
+            const q = window.query(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'assessments'));
+            
+            window.onSnapshot(q, (snapshot) => {
+                // Clear Lists
+                ['dini', 'awal', 'semenjana', 'madya', 'mahir'].forEach(c => document.getElementById(`list-${c}`).innerHTML = '');
+                
+                let activeStudents = 0;
+                let classCounts = {};
+
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    activeStudents++;
+                    
+                    // Class Stats
+                    if(!classCounts[data.class]) classCounts[data.class] = 0;
+                    classCounts[data.class]++;
+
+                    // Populate Lists
+                    const li = `<li class="border-b border-gray-100 pb-1 flex justify-between items-center">
+                        <span class="truncate w-24" title="${data.name}">${data.name}</span> 
+                        <span class="text-[10px] bg-gray-100 rounded px-1 text-gray-500 font-mono">${data.class}</span>
+                    </li>`;
+                    
+                    const catKey = data.category.toLowerCase().replace('pembaca ', '');
+                    const listEl = document.getElementById(`list-${catKey}`);
+                    if(listEl) listEl.innerHTML += li;
+                });
+
+                // Update Dashboard Highlights (Simple Logic)
+                document.getElementById('dashboard-active-students').innerHTML = `<span class="text-3xl font-bold text-gray-800">${activeStudents}</span> Siswa`;
+                
+                // Find Top Class
+                let topClass = '-';
+                let maxCount = 0;
+                for (const [cls, count] of Object.entries(classCounts)) {
+                    if (count > maxCount) { maxCount = count; topClass = cls; }
+                }
+                document.getElementById('dashboard-active-classes').innerHTML = topClass !== '-' ? 
+                    `<span class="text-3xl font-bold text-gray-800">${topClass}</span> (${maxCount} Siswa)` : 
+                    "Belum ada data";
+            });
+        }
+
+        // --- UTILS (Login, Bulk Input, Render Books) ---
         function generateBulkInputs() {
             const container = document.getElementById('bulk-inputs');
             container.innerHTML = '';
@@ -462,66 +610,52 @@
             }
         }
 
-        // --- BULK ADD STUDENT ---
         function addBulkStudents(e) {
             e.preventDefault();
-            const form = e.target;
             const targetClass = document.getElementById('db-bulk-class').value;
-            
-            if(!targetClass) { alert("Pilih kelas terlebih dahulu!"); return; }
-
+            if(!targetClass) { alert("Pilih kelas!"); return; }
             if (!state.studentData[targetClass]) state.studentData[targetClass] = [];
             
+            const inputs = e.target.querySelectorAll('input[type="text"]');
             let count = 0;
-            const inputs = form.querySelectorAll('input[type="text"]');
             inputs.forEach(input => {
-                if(input.value.trim() !== "") {
+                if(input.value.trim()) {
                     state.studentData[targetClass].push(input.value.trim());
-                    input.value = ""; // Clear input
+                    input.value = "";
                     count++;
                 }
             });
-
             localStorage.setItem('albannaStudents', JSON.stringify(state.studentData));
-            alert(`Berhasil menambahkan ${count} siswa ke kelas ${targetClass}`);
+            alert(`Berhasil menambahkan ${count} siswa ke ${targetClass}`);
         }
 
-        // --- LOGIN LOGIC ---
         function populateStudentNames() {
-            const classSelect = document.getElementById('input-class');
-            const nameSelect = document.getElementById('input-name');
-            const selectedClass = classSelect.value;
-            nameSelect.innerHTML = '<option value="" disabled selected>-- Pilih Nama --</option>';
-            
-            if (selectedClass && state.studentData[selectedClass]) {
-                const students = state.studentData[selectedClass];
-                students.forEach(name => {
-                    const option = document.createElement('option');
-                    option.value = name;
-                    option.textContent = name;
-                    nameSelect.appendChild(option);
+            const cls = document.getElementById('input-class').value;
+            const sel = document.getElementById('input-name');
+            sel.innerHTML = '<option value="" disabled selected>-- Pilih Nama --</option>';
+            if (cls && state.studentData[cls]) {
+                state.studentData[cls].forEach(n => {
+                    const opt = document.createElement('option');
+                    opt.value = n; opt.textContent = n;
+                    sel.appendChild(opt);
                 });
-                nameSelect.disabled = false;
-                nameSelect.classList.remove('bg-gray-100', 'cursor-not-allowed');
-                nameSelect.classList.add('bg-white');
-            } else {
-                nameSelect.disabled = true;
-            }
+                sel.disabled = false; sel.classList.replace('bg-gray-100', 'bg-white');
+            } else { sel.disabled = true; }
         }
 
         function handleLogin(e) {
             e.preventDefault();
-            const kelas = document.getElementById('input-class').value;
-            const name = document.getElementById('input-name').value;
-            if(name && kelas) {
-                state.user = { name, kelas };
+            const k = document.getElementById('input-class').value;
+            const n = document.getElementById('input-name').value;
+            if(n && k) {
+                state.user = { name: n, kelas: k };
                 localStorage.setItem('albannaUser', JSON.stringify(state.user));
                 showDashboard();
             }
         }
 
         function handleLogout() {
-            if(confirm('Keluar dari portal?')) {
+            if(confirm('Keluar?')) {
                 localStorage.removeItem('albannaUser');
                 state.user = null;
                 document.getElementById('dashboard-view').classList.add('hidden');
@@ -538,148 +672,40 @@
             document.getElementById('display-name').textContent = state.user.name;
             document.getElementById('welcome-name').textContent = state.user.name.split(' ')[0];
             document.getElementById('display-class').textContent = state.user.kelas;
-            const initials = state.user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-            document.getElementById('user-avatar').textContent = initials;
+            document.getElementById('user-avatar').textContent = state.user.name.substring(0,2).toUpperCase();
             
             switchTab('beranda');
             updateDashboardGreeting();
         }
 
-        function switchTab(tabName) {
-            ['beranda', 'asesmen', 'kategori', 'koleksi', 'jurnal', 'database'].forEach(view => {
-                const el = document.getElementById(`view-${view}`);
+        function switchTab(t) {
+            state.currentTab = t;
+            ['beranda', 'asesmen', 'kategori', 'koleksi', 'jurnal', 'database'].forEach(v => {
+                const el = document.getElementById(`view-${v}`);
                 if(el) el.classList.add('hidden');
-                const nav = document.getElementById(`nav-${view}`);
-                if(nav) {
-                    nav.classList.remove('bg-green-50', 'text-green-700');
-                    nav.classList.add('text-gray-600');
-                }
+                const nav = document.getElementById(`nav-${v}`);
+                if(nav) nav.className = nav.className.replace('bg-green-50 text-green-700', 'text-gray-600');
             });
-            document.getElementById(`view-${tabName}`).classList.remove('hidden');
-            const activeNav = document.getElementById(`nav-${tabName}`);
-            if(activeNav) {
-                activeNav.classList.remove('text-gray-600');
-                activeNav.classList.add('bg-green-50', 'text-green-700');
-            }
-        }
-
-        // --- ASESMEN LOGIC (FIREBASE) ---
-        async function submitAssessment(e) {
-            e.preventDefault();
-            const s1 = parseInt(document.getElementById('q1').value);
-            const s2 = parseInt(document.getElementById('q2').value);
-            const s3 = parseInt(document.getElementById('q3').value);
-            
-            // Simple Logic for Level
-            const total = s1 + s2 + s3;
-            let categoryIndex = 0;
-            // Max score 12 (4+4+4), Min 3
-            if (total <= 4) categoryIndex = 0; // Dini
-            else if (total <= 6) categoryIndex = 1; // Awal
-            else if (total <= 8) categoryIndex = 2; // Semenjana
-            else if (total <= 10) categoryIndex = 3; // Madya
-            else categoryIndex = 4; // Mahir
-
-            const category = state.assessmentCategories[categoryIndex];
-            document.getElementById('result-category').textContent = category;
-            document.getElementById('assessment-result').classList.remove('hidden');
-
-            // Save to Firebase
-            if (window.db && state.user) {
-                try {
-                    const docId = `${state.user.kelas}_${state.user.name.replace(/\s+/g, '_')}`;
-                    await window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'assessments', docId), {
-                        name: state.user.name,
-                        class: state.user.kelas,
-                        category: category,
-                        timestamp: new Date().toISOString()
-                    });
-                    updateDashboardGreeting(category);
-                } catch (err) {
-                    console.error("Firebase save failed", err);
-                    alert("Gagal menyimpan ke cloud, pastikan koneksi internet lancar.");
-                }
-            } else {
-                // Local fallback simulation
-                localStorage.setItem(`assessment_${state.user.name}`, category);
-                updateDashboardGreeting(category);
-                alert("Mode Offline: Data disimpan di browser.");
-            }
-        }
-
-        // --- DASHBOARD GREETING ---
-        async function updateDashboardGreeting(manualCategory = null) {
-            const greetingEl = document.getElementById('assessment-greeting');
-            let category = manualCategory;
-
-            if (!category && window.db && state.user) {
-                // Fetch from Firebase logic would go here via listener, but for now we wait for user action or local cache
-                // Simulating fetch or checking local cache for immediate display
-                category = localStorage.getItem(`assessment_${state.user.name}`); 
-            }
-
-            if (category) {
-                greetingEl.innerHTML = `Halo, kamu <b>${category}</b>! Pertahankan semangat membacamu ya.`;
-            } else {
-                greetingEl.innerHTML = `Kamu belum melakukan asesmen. Yuk cek level membaca kamu sekarang!`;
-            }
-        }
-
-        // --- REALTIME CATEGORY VIEW ---
-        function setupRealtimeListeners() {
-            if (!window.db) return;
-            
-            // Listen to ALL assessments
-            const q = window.query(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'assessments'));
-            
-            window.onSnapshot(q, (snapshot) => {
-                // Reset Lists
-                document.getElementById('list-dini').innerHTML = '';
-                document.getElementById('list-awal').innerHTML = '';
-                document.getElementById('list-semenjana').innerHTML = '';
-                document.getElementById('list-madya').innerHTML = '';
-                document.getElementById('list-mahir').innerHTML = '';
-
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const li = `<li class="border-b border-gray-100 pb-1 flex justify-between">
-                        <span>${data.name}</span> <span class="text-xs bg-gray-100 rounded px-1">${data.class}</span>
-                    </li>`;
-                    
-                    if (data.category === "Pembaca Dini") document.getElementById('list-dini').innerHTML += li;
-                    else if (data.category === "Pembaca Awal") document.getElementById('list-awal').innerHTML += li;
-                    else if (data.category === "Pembaca Semenjana") document.getElementById('list-semenjana').innerHTML += li;
-                    else if (data.category === "Pembaca Madya") document.getElementById('list-madya').innerHTML += li;
-                    else if (data.category === "Pembaca Mahir") document.getElementById('list-mahir').innerHTML += li;
-                });
-            });
-        }
-
-        function renderBooks() {
-            const grid = document.getElementById('book-grid');
-            grid.innerHTML = state.books.map(book => `
-                <a href="${book.link}" target="_blank" class="bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition cursor-pointer border border-gray-100 group block">
-                    <div class="${book.color} h-40 rounded-lg mb-3 flex items-center justify-center text-4xl text-gray-400 group-hover:scale-105 transition transform">
-                        <i class="fas fa-external-link-alt"></i>
-                    </div>
-                    <h4 class="font-bold text-gray-800 truncate">${book.title}</h4>
-                    <p class="text-xs text-gray-500 mb-2">${book.author}</p>
-                    <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">${book.category}</span>
-                </a>
-            `).join('');
+            document.getElementById(`view-${t}`).classList.remove('hidden');
+            const active = document.getElementById(`nav-${t}`);
+            if(active) active.className = active.className.replace('text-gray-600', 'bg-green-50 text-green-700');
         }
 
         function accessDatabase() {
-            const password = prompt("Masukkan Password Admin:", "");
-            if (password === "admin123") switchTab('database');
-            else alert("Akses ditolak.");
+            if(prompt("Password Admin:") === "admin123") switchTab('database');
+            else alert("Salah.");
         }
 
+        function renderBooks() {
+            document.getElementById('book-grid').innerHTML = state.books.map(b => `
+                <a href="${b.link}" target="_blank" class="bg-white p-4 rounded-xl shadow-sm hover:shadow-md border border-gray-100 flex items-center gap-4 group">
+                    <div class="${b.color} w-16 h-16 rounded-lg flex items-center justify-center text-2xl group-hover:scale-110 transition"><i class="fas fa-external-link-alt"></i></div>
+                    <div><h4 class="font-bold text-gray-800">${b.title}</h4><p class="text-xs text-gray-500">${b.category}</p></div>
+                </a>`).join('');
+        }
+        
         function submitJournal(e) {
-            e.preventDefault();
-            alert('Jurnal berhasil dikirim! Terima kasih sudah membaca.');
-            e.target.reset();
-            switchTab('beranda');
+            e.preventDefault(); alert("Terkirim!"); e.target.reset(); switchTab('beranda');
         }
     </script>
 </body>
