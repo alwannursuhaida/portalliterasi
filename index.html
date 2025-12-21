@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Literasi SMP Albanna</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #10B981; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #059669; }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 h-screen overflow-hidden">
+
+    <!-- APP CONTAINER -->
+    <div id="app" class="h-full w-full relative">
+        
+        <!-- 1. LOGIN SECTION (Index Page) -->
+        <div id="login-view" class="h-full w-full flex items-center justify-center bg-gradient-to-br from-green-500 to-teal-700 p-4">
+            <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md fade-in relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-2 bg-yellow-400"></div>
+                
+                <div class="text-center mb-8">
+                    <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600">
+                        <i class="fas fa-book-reader text-3xl"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold text-gray-800">Portal Literasi</h1>
+                    <p class="text-sm text-gray-500 font-medium tracking-widest">SMP ALBANNA</p>
+                </div>
+
+                <form id="login-form" onsubmit="handleLogin(event)" class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap Siswa</label>
+                        <div class="relative">
+                            <i class="fas fa-user absolute left-3 top-3 text-gray-400"></i>
+                            <input type="text" id="input-name" required placeholder="Masukkan nama kamu..." 
+                                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Kelas</label>
+                        <div class="relative">
+                            <i class="fas fa-school absolute left-3 top-3 text-gray-400"></i>
+                            <select id="input-class" required 
+                                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition bg-white appearance-none">
+                                <option value="" disabled selected>-- Pilih Kelas --</option>
+                                <option value="7A">Kelas 7A - Al-Fatih</option>
+                                <option value="7B">Kelas 7B - Ibnu Sina</option>
+                                <option value="8A">Kelas 8A - Al-Khawarizmi</option>
+                                <option value="8B">Kelas 8B - Al-Farabi</option>
+                                <option value="9A">Kelas 9A - Salahuddin</option>
+                                <option value="9B">Kelas 9B - Averroes</option>
+                            </select>
+                            <i class="fas fa-chevron-down absolute right-3 top-3 text-gray-400 pointer-events-none"></i>
+                        </div>
+                    </div>
+
+                    <button type="submit" 
+                        class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow-lg hover:shadow-green-500/30 transition transform hover:-translate-y-1">
+                        Masuk Portal <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </form>
+                
+                <div class="mt-6 text-center text-xs text-gray-400">
+                    &copy; 2025 Perpustakaan SMP Albanna
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. DASHBOARD LAYOUT (Hidden by default) -->
+        <div id="dashboard-view" class="hidden h-full flex flex-col md:flex-row">
+            
+            <!-- Sidebar -->
+            <aside class="w-full md:w-64 bg-white border-r border-gray-200 flex flex-col h-auto md:h-full z-20">
+                <div class="p-6 border-b border-gray-100 flex items-center gap-3">
+                    <div class="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center text-white shadow-lg">
+                        <i class="fas fa-book-open"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-gray-800 leading-tight">Literasi</h2>
+                        <span class="text-xs text-green-600 font-semibold">SMP ALBANNA</span>
+                    </div>
+                </div>
+
+                <!-- Navigation Menu -->
+                <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+                    <button onclick="switchTab('beranda')" id="nav-beranda" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg bg-green-50 text-green-700">
+                        <i class="fas fa-home w-5"></i> Beranda
+                    </button>
+                    <button onclick="switchTab('koleksi')" id="nav-koleksi" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg transition">
+                        <i class="fas fa-swatchbook w-5"></i> Koleksi Buku
+                    </button>
+                    <button onclick="switchTab('jurnal')" id="nav-jurnal" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg transition">
+                        <i class="fas fa-pen-fancy w-5"></i> Tulis Jurnal
+                    </button>
+                    <button onclick="switchTab('peringkat')" id="nav-peringkat" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg transition">
+                        <i class="fas fa-trophy w-5"></i> Peringkat Rajin
+                    </button>
+                </nav>
+
+                <!-- User Profile Mini -->
+                <div class="p-4 border-t border-gray-200 bg-gray-50">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 flex items-center justify-center text-white font-bold" id="user-avatar">
+                            <!-- Initials here -->
+                        </div>
+                        <div class="overflow-hidden">
+                            <p class="text-sm font-bold text-gray-800 truncate" id="display-name">Siswa</p>
+                            <p class="text-xs text-gray-500" id="display-class">Kelas</p>
+                        </div>
+                    </div>
+                    <button onclick="handleLogout()" class="w-full text-xs flex items-center justify-center gap-2 text-red-500 hover:text-red-700 py-2 border border-red-200 rounded hover:bg-red-50 transition">
+                        <i class="fas fa-sign-out-alt"></i> Keluar
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="flex-1 bg-gray-50 relative overflow-hidden flex flex-col h-full">
+                <!-- Mobile Header -->
+                <header class="md:hidden bg-white p-4 flex justify-between items-center shadow-sm">
+                    <span class="font-bold text-green-700">Portal Albanna</span>
+                    <button onclick="alert('Menu sidebar tersedia di tampilan desktop untuk demo ini.')" class="text-gray-500"><i class="fas fa-bars"></i></button>
+                </header>
+
+                <!-- Scrollable Content -->
+                <div id="main-scroll" class="flex-1 overflow-y-auto p-4 md:p-8">
+                    
+                    <!-- 1. BERANDA VIEW -->
+                    <section id="view-beranda" class="space-y-6 fade-in">
+                        <!-- Welcome Banner -->
+                        <div class="bg-gradient-to-r from-green-600 to-teal-600 rounded-2xl p-6 md:p-10 text-white shadow-lg relative overflow-hidden">
+                            <div class="absolute right-0 top-0 opacity-10 transform translate-x-10 -translate-y-10">
+                                <i class="fas fa-book text-9xl"></i>
+                            </div>
+                            <h2 class="text-2xl md:text-3xl font-bold mb-2">Ahlan Wa Sahlan, <span id="welcome-name">Siswa</span>! 👋</h2>
+                            <p class="text-green-100 max-w-lg">Sudah membaca buku apa hari ini? Mari tingkatkan literasi untuk masa depan yang gemilang.</p>
+                            <div class="mt-6 flex gap-3">
+                                <button onclick="switchTab('koleksi')" class="bg-white text-green-700 px-5 py-2 rounded-lg font-semibold shadow hover:bg-gray-100 transition">Cari Buku</button>
+                                <button onclick="switchTab('jurnal')" class="bg-green-700 bg-opacity-50 text-white border border-green-400 px-5 py-2 rounded-lg font-semibold hover:bg-opacity-70 transition">Tulis Review</button>
+                            </div>
+                        </div>
+
+                        <!-- Stats Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="text-gray-500 text-sm">Buku Dibaca</p>
+                                        <h3 class="text-3xl font-bold text-gray-800">12</h3>
+                                    </div>
+                                    <div class="p-2 bg-blue-100 text-blue-600 rounded-lg"><i class="fas fa-book-open"></i></div>
+                                </div>
+                            </div>
+                            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="text-gray-500 text-sm">Poin Literasi</p>
+                                        <h3 class="text-3xl font-bold text-gray-800">850</h3>
+                                    </div>
+                                    <div class="p-2 bg-yellow-100 text-yellow-600 rounded-lg"><i class="fas fa-star"></i></div>
+                                </div>
+                            </div>
+                            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-purple-500">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="text-gray-500 text-sm">Target Bulan Ini</p>
+                                        <h3 class="text-3xl font-bold text-gray-800">80%</h3>
+                                    </div>
+                                    <div class="p-2 bg-purple-100 text-purple-600 rounded-lg"><i class="fas fa-chart-line"></i></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chart Section -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm">
+                            <h3 class="font-bold text-gray-700 mb-4">Statistik Membaca Mingguan</h3>
+                            <div class="h-64">
+                                <canvas id="readChart"></canvas>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 2. KOLEKSI BUKU VIEW -->
+                    <section id="view-koleksi" class="hidden space-y-6 fade-in">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold text-gray-800">Perpustakaan Digital</h2>
+                            <div class="relative">
+                                <input type="text" placeholder="Cari judul buku..." class="pl-10 pr-4 py-2 rounded-full border border-gray-300 text-sm focus:ring-2 focus:ring-green-500 outline-none w-64">
+                                <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-6" id="book-grid">
+                            <!-- Book Items injected by JS -->
+                        </div>
+                    </section>
+
+                    <!-- 3. JURNAL VIEW -->
+                    <section id="view-jurnal" class="hidden fade-in max-w-2xl mx-auto">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-6">Tulis Jurnal Literasi</h2>
+                        <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+                            <form onsubmit="submitJournal(event)">
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Judul Buku</label>
+                                    <input type="text" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 border p-2" placeholder="Contoh: Laskar Pelangi" required>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Penulis</label>
+                                    <input type="text" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 border p-2" required>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Ringkasan / Hikmah yang didapat</label>
+                                    <textarea rows="4" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 border p-2" placeholder="Tuliskan apa yang kamu pelajari dari buku ini..." required></textarea>
+                                </div>
+                                <div class="mb-6">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Rating Buku</label>
+                                    <div class="flex gap-2 text-2xl text-gray-300 cursor-pointer" id="star-rating">
+                                        <i class="fas fa-star hover:text-yellow-400 transition" onclick="setRating(1)"></i>
+                                        <i class="fas fa-star hover:text-yellow-400 transition" onclick="setRating(2)"></i>
+                                        <i class="fas fa-star hover:text-yellow-400 transition" onclick="setRating(3)"></i>
+                                        <i class="fas fa-star hover:text-yellow-400 transition" onclick="setRating(4)"></i>
+                                        <i class="fas fa-star hover:text-yellow-400 transition" onclick="setRating(5)"></i>
+                                    </div>
+                                </div>
+                                <button type="submit" class="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 transition">Kirim Jurnal</button>
+                            </form>
+                        </div>
+                    </section>
+
+                    <!-- 4. PERINGKAT VIEW -->
+                    <section id="view-peringkat" class="hidden fade-in">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-6">Papan Peringkat Literasi</h2>
+                        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                            <table class="w-full text-left border-collapse">
+                                <thead class="bg-gray-100 text-gray-600 uppercase text-xs font-bold">
+                                    <tr>
+                                        <th class="px-6 py-4">#</th>
+                                        <th class="px-6 py-4">Siswa</th>
+                                        <th class="px-6 py-4">Kelas</th>
+                                        <th class="px-6 py-4 text-center">Buku Dibaca</th>
+                                        <th class="px-6 py-4 text-center">Poin</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200" id="leaderboard-body">
+                                    <!-- Rows injected by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- 1. STATE MANAGEMENT ---
+        const state = {
+            user: null, // { name: '', class: '' }
+            currentTab: 'beranda',
+            books: [
+                { id: 1, title: "Laskar Pelangi", author: "Andrea Hirata", category: "Novel", color: "bg-blue-100" },
+                { id: 2, title: "Negeri 5 Menara", author: "A. Fuadi", category: "Motivasi", color: "bg-red-100" },
+                { id: 3, title: "Sejarah Islam", author: "Prof. Hamka", category: "Sejarah", color: "bg-green-100" },
+                { id: 4, title: "Fisika Asyik", author: "Yohanes Surya", category: "Sains", color: "bg-yellow-100" },
+                { id: 5, title: "Bumi Manusia", author: "Pramoedya", category: "Sastra", color: "bg-orange-100" },
+                { id: 6, title: "Pulang", author: "Tere Liye", category: "Novel", color: "bg-purple-100" },
+            ],
+            leaderboard: [
+                { name: "Ahmad Fulan", class: "9A", books: 24, points: 1200 },
+                { name: "Siti Aminah", class: "8B", books: 20, points: 980 },
+                { name: "Budi Santoso", class: "7A", books: 18, points: 850 },
+                { name: "Dewi Lestari", class: "9B", books: 15, points: 720 },
+                { name: "Rizky Ramadhan", class: "8A", books: 12, points: 600 },
+            ]
+        };
+
+        // --- 2. INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const storedUser = localStorage.getItem('albannaUser');
+            if (storedUser) {
+                state.user = JSON.parse(storedUser);
+                showDashboard();
+            }
+            renderBooks();
+            renderLeaderboard();
+            initChart();
+        });
+
+        // --- 3. AUTHENTICATION ---
+        function handleLogin(e) {
+            e.preventDefault();
+            const name = document.getElementById('input-name').value;
+            const kelas = document.getElementById('input-class').value;
+
+            if(name && kelas) {
+                state.user = { name, kelas };
+                localStorage.setItem('albannaUser', JSON.stringify(state.user));
+                
+                // Add loading effect simulation
+                const btn = e.target.querySelector('button');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memuat...';
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    showDashboard();
+                }, 800);
+            }
+        }
+
+        function handleLogout() {
+            if(confirm('Apakah kamu yakin ingin keluar?')) {
+                localStorage.removeItem('albannaUser');
+                state.user = null;
+                document.getElementById('dashboard-view').classList.add('hidden');
+                document.getElementById('login-view').classList.remove('hidden');
+                // Reset form
+                document.getElementById('login-form').reset();
+            }
+        }
+
+        function showDashboard() {
+            // Hide Login, Show Dashboard
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('dashboard-view').classList.remove('hidden');
+            document.getElementById('dashboard-view').classList.add('flex'); // Ensure flex is added back
+
+            // Update User Info UI
+            document.getElementById('display-name').textContent = state.user.name;
+            document.getElementById('welcome-name').textContent = state.user.name.split(' ')[0]; // First name only
+            document.getElementById('display-class').textContent = state.user.kelas;
+            
+            // Initials avatar
+            const initials = state.user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+            document.getElementById('user-avatar').textContent = initials;
+
+            switchTab('beranda');
+        }
+
+        // --- 4. NAVIGATION (SPA LOGIC) ---
+        function switchTab(tabName) {
+            // Update State
+            state.currentTab = tabName;
+
+            // Hide all views
+            ['beranda', 'koleksi', 'jurnal', 'peringkat'].forEach(view => {
+                document.getElementById(`view-${view}`).classList.add('hidden');
+                document.getElementById(`nav-${view}`).classList.remove('bg-green-50', 'text-green-700');
+                document.getElementById(`nav-${view}`).classList.add('text-gray-600');
+            });
+
+            // Show selected view
+            document.getElementById(`view-${tabName}`).classList.remove('hidden');
+            
+            // Update Active Nav Style
+            const activeNav = document.getElementById(`nav-${tabName}`);
+            activeNav.classList.remove('text-gray-600');
+            activeNav.classList.add('bg-green-50', 'text-green-700');
+
+            // Scroll to top
+            document.getElementById('main-scroll').scrollTop = 0;
+        }
+
+        // --- 5. RENDER FUNCTIONS ---
+        function renderBooks() {
+            const grid = document.getElementById('book-grid');
+            grid.innerHTML = state.books.map(book => `
+                <div class="bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition cursor-pointer border border-gray-100 group">
+                    <div class="${book.color} h-40 rounded-lg mb-3 flex items-center justify-center text-4xl text-gray-400 group-hover:scale-105 transition transform">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <h4 class="font-bold text-gray-800 truncate">${book.title}</h4>
+                    <p class="text-xs text-gray-500 mb-2">${book.author}</p>
+                    <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">${book.category}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderLeaderboard() {
+            const tbody = document.getElementById('leaderboard-body');
+            tbody.innerHTML = state.leaderboard.map((student, index) => `
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        ${index === 0 ? '<i class="fas fa-crown text-yellow-500"></i>' : 
+                          index === 1 ? '<i class="fas fa-medal text-gray-400"></i>' : 
+                          index === 2 ? '<i class="fas fa-medal text-orange-400"></i>' : index + 1}
+                    </td>
+                    <td class="px-6 py-4 font-medium text-gray-900">${student.name}</td>
+                    <td class="px-6 py-4 text-gray-500">${student.class}</td>
+                    <td class="px-6 py-4 text-center text-green-600 font-bold">${student.books}</td>
+                    <td class="px-6 py-4 text-center font-bold text-gray-700">${student.points} pts</td>
+                </tr>
+            `).join('');
+        }
+
+        function submitJournal(e) {
+            e.preventDefault();
+            alert('Jurnal berhasil dikirim! Terima kasih sudah membaca.');
+            e.target.reset();
+            switchTab('beranda');
+        }
+
+        function setRating(val) {
+            const stars = document.getElementById('star-rating').children;
+            for(let i=0; i<5; i++) {
+                if(i < val) {
+                    stars[i].classList.remove('text-gray-300');
+                    stars[i].classList.add('text-yellow-400');
+                } else {
+                    stars[i].classList.remove('text-yellow-400');
+                    stars[i].classList.add('text-gray-300');
+                }
+            }
+        }
+
+        // --- 6. CHART.JS ---
+        function initChart() {
+            const ctx = document.getElementById('readChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
+                    datasets: [{
+                        label: 'Halaman Dibaca',
+                        data: [12, 19, 3, 25, 15, 40, 30],
+                        backgroundColor: '#10B981',
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { display: false } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
