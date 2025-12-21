@@ -159,21 +159,100 @@
                             </div>
                         </div>
 
-                        <!-- Stats Grid -->
+                        <!-- School Highlights Section (Top Students & Classes) -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- 1. Siswa Terrajin (Top Students) -->
+                            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                                <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                    <span class="bg-yellow-100 text-yellow-600 w-8 h-8 rounded-full flex items-center justify-center text-sm">
+                                        <i class="fas fa-crown"></i>
+                                    </span>
+                                    Siswa Terrajin Bulan Ini
+                                </h3>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <!-- Putra -->
+                                    <div class="bg-blue-50 rounded-xl p-4 border border-blue-100 relative overflow-hidden group hover:shadow-md transition">
+                                        <div class="absolute right-0 top-0 p-2 opacity-10"><i class="fas fa-user-tie text-6xl text-blue-600"></i></div>
+                                        <p class="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1 bg-blue-100 inline-block px-2 py-0.5 rounded">Putra</p>
+                                        <h4 class="font-bold text-gray-800 text-lg mt-1 truncate" id="top-student-male-name">...</h4>
+                                        <p class="text-sm text-gray-600 mb-2" id="top-student-male-class">...</p>
+                                        <div class="flex items-center gap-2 text-blue-700 font-semibold text-sm">
+                                            <i class="fas fa-book-open"></i> <span id="top-student-male-books">0</span> Buku
+                                        </div>
+                                    </div>
+                                    <!-- Putri -->
+                                    <div class="bg-pink-50 rounded-xl p-4 border border-pink-100 relative overflow-hidden group hover:shadow-md transition">
+                                        <div class="absolute right-0 top-0 p-2 opacity-10"><i class="fas fa-user-graduate text-6xl text-pink-600"></i></div>
+                                        <p class="text-[10px] font-bold text-pink-600 uppercase tracking-wider mb-1 bg-pink-100 inline-block px-2 py-0.5 rounded">Putri</p>
+                                        <h4 class="font-bold text-gray-800 text-lg mt-1 truncate" id="top-student-female-name">...</h4>
+                                        <p class="text-sm text-gray-600 mb-2" id="top-student-female-class">...</p>
+                                        <div class="flex items-center gap-2 text-pink-700 font-semibold text-sm">
+                                            <i class="fas fa-book-open"></i> <span id="top-student-female-books">0</span> Buku
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 2. Kelas Teraktif (Top Classes) -->
+                            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                                <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                    <span class="bg-orange-100 text-orange-600 w-8 h-8 rounded-full flex items-center justify-center text-sm">
+                                        <i class="fas fa-trophy"></i>
+                                    </span>
+                                    Kelas Paling Aktif
+                                </h3>
+                                <div class="space-y-3">
+                                    <!-- Putra -->
+                                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100 transition group">
+                                        <div class="flex items-center gap-4">
+                                            <div class="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl group-hover:scale-110 transition">
+                                                <i class="fas fa-mosque"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-xs font-bold text-gray-400 uppercase">Kelas Putra</p>
+                                                <h4 class="font-bold text-gray-800" id="top-class-male-name">...</h4>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-2xl font-bold text-indigo-600" id="top-class-male-total">0</p>
+                                            <p class="text-xs text-gray-500">Buku Dibaca</p>
+                                        </div>
+                                    </div>
+                                    <!-- Putri -->
+                                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100 transition group">
+                                        <div class="flex items-center gap-4">
+                                            <div class="w-12 h-12 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-xl group-hover:scale-110 transition">
+                                                <i class="fas fa-school"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-xs font-bold text-gray-400 uppercase">Kelas Putri</p>
+                                                <h4 class="font-bold text-gray-800" id="top-class-female-name">...</h4>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-2xl font-bold text-purple-600" id="top-class-female-total">0</p>
+                                            <p class="text-xs text-gray-500">Buku Dibaca</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Personal Stats Grid (Simulated for Demo) -->
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
                                 <div class="flex justify-between items-start">
                                     <div>
-                                        <p class="text-gray-500 text-sm">Buku Dibaca</p>
+                                        <p class="text-gray-500 text-sm">Buku Kamu</p>
                                         <h3 class="text-3xl font-bold text-gray-800">12</h3>
                                     </div>
-                                    <div class="p-2 bg-blue-100 text-blue-600 rounded-lg"><i class="fas fa-book-open"></i></div>
+                                    <div class="p-2 bg-blue-100 text-blue-600 rounded-lg"><i class="fas fa-book-reader"></i></div>
                                 </div>
                             </div>
                             <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500">
                                 <div class="flex justify-between items-start">
                                     <div>
-                                        <p class="text-gray-500 text-sm">Poin Literasi</p>
+                                        <p class="text-gray-500 text-sm">Poin Kamu</p>
                                         <h3 class="text-3xl font-bold text-gray-800">850</h3>
                                     </div>
                                     <div class="p-2 bg-yellow-100 text-yellow-600 rounded-lg"><i class="fas fa-star"></i></div>
@@ -182,7 +261,7 @@
                             <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-purple-500">
                                 <div class="flex justify-between items-start">
                                     <div>
-                                        <p class="text-gray-500 text-sm">Target Bulan Ini</p>
+                                        <p class="text-gray-500 text-sm">Target</p>
                                         <h3 class="text-3xl font-bold text-gray-800">80%</h3>
                                     </div>
                                     <div class="p-2 bg-purple-100 text-purple-600 rounded-lg"><i class="fas fa-chart-line"></i></div>
@@ -292,7 +371,18 @@
                 { name: "Budi Santoso", class: "7A", books: 18, points: 850 },
                 { name: "Dewi Lestari", class: "9B", books: 15, points: 720 },
                 { name: "Rizky Ramadhan", class: "8A", books: 12, points: 600 },
-            ]
+            ],
+            // Data baru untuk Highlights (Siswa & Kelas Teraktif)
+            highlights: {
+                students: {
+                    male: { name: "Fatih Al-Ayyubi", class: "9A", books: 42 },
+                    female: { name: "Aisyah Humaira", class: "8B", books: 56 }
+                },
+                classes: {
+                    male: { name: "7A - Al-Fatih", total: 450 },
+                    female: { name: "9B - Averroes", total: 520 }
+                }
+            }
         };
 
         // --- 2. INITIALIZATION ---
@@ -304,6 +394,7 @@
             }
             renderBooks();
             renderLeaderboard();
+            renderHighlights(); // Render fungsi baru
             initChart();
         });
 
@@ -383,6 +474,27 @@
         }
 
         // --- 5. RENDER FUNCTIONS ---
+        // NEW: Fungsi untuk merender Highlights Siswa & Kelas
+        function renderHighlights() {
+            const h = state.highlights;
+            
+            // Render Siswa
+            document.getElementById('top-student-male-name').textContent = h.students.male.name;
+            document.getElementById('top-student-male-class').textContent = h.students.male.class;
+            document.getElementById('top-student-male-books').textContent = h.students.male.books;
+
+            document.getElementById('top-student-female-name').textContent = h.students.female.name;
+            document.getElementById('top-student-female-class').textContent = h.students.female.class;
+            document.getElementById('top-student-female-books').textContent = h.students.female.books;
+
+            // Render Kelas
+            document.getElementById('top-class-male-name').textContent = h.classes.male.name;
+            document.getElementById('top-class-male-total').textContent = h.classes.male.total;
+
+            document.getElementById('top-class-female-name').textContent = h.classes.female.name;
+            document.getElementById('top-class-female-total').textContent = h.classes.female.total;
+        }
+
         function renderBooks() {
             const grid = document.getElementById('book-grid');
             grid.innerHTML = state.books.map(book => `
