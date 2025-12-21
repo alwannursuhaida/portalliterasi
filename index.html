@@ -13,7 +13,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, onSnapshot, query, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, query, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Firebase Configuration Hook
         let db, auth, appId;
@@ -39,6 +39,7 @@
                     window.collection = collection;
                     window.doc = doc;
                     window.setDoc = setDoc;
+                    window.getDoc = getDoc; // Add getDoc
                     window.onSnapshot = onSnapshot;
                     window.query = query;
                     
@@ -120,6 +121,10 @@
                                 <option value="" disabled selected>-- Pilih Kelas Terlebih Dahulu --</option>
                             </select>
                             <i class="fas fa-chevron-down absolute right-3 top-3 text-gray-400 pointer-events-none"></i>
+                            <!-- Loading Indicator for Students -->
+                            <div id="student-loading" class="hidden absolute right-10 top-3">
+                                <i class="fas fa-circle-notch fa-spin text-green-500"></i>
+                            </div>
                         </div>
                     </div>
 
@@ -356,7 +361,7 @@
                                 <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6" id="bulk-inputs"></div>
 
                                 <button type="submit" class="w-full md:w-auto px-8 bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">
-                                    <i class="fas fa-save mr-2"></i> Simpan Data ke Kelas
+                                    <i class="fas fa-save mr-2"></i> Simpan Data ke Kelas (Cloud)
                                 </button>
                             </form>
                         </div>
@@ -376,17 +381,8 @@
                 { id: 1, title: "SIBI", author: "Kemendikdasmen", category: "Portal Buku", color: "bg-blue-100", link: "https://buku.kemendikdasmen.go.id/" },
                 { id: 2, title: "Badan Bahasa", author: "Kemendikdasmen", category: "Portal Bahasa", color: "bg-green-100", link: "https://badanbahasa.kemendikdasmen.go.id/" },
             ],
-            // Data Siswa (Default 1 Dummy per kelas)
-            studentData: {
-                // Putra
-                "7A": ["Siswa 7A"], "7B": ["Siswa 7B"], "7C": ["Siswa 7C"],
-                "8A": ["Siswa 8A"], "8B": ["Siswa 8B"], "8C": ["Siswa 8C"],
-                "9A": ["Siswa 9A"], "9B": ["Siswa 9B"], "9C": ["Siswa 9C"],
-                // Putri
-                "7D": ["Siswa 7D"], "7E": ["Siswa 7E"], "7F": ["Siswa 7F"],
-                "8D": ["Siswa 8D"], "8E": ["Siswa 8E"], "8F": ["Siswa 8F"],
-                "9D": ["Siswa 9D"], "9E": ["Siswa 9E"]
-            },
+            // Data Siswa (Init kosong, akan diload dari Firebase)
+            studentData: {},
             // SOAL ASESMEN LITERASI (12 Soal)
             assessmentData: [
                 {
@@ -438,13 +434,14 @@
                     ]
                 }
             ],
-            // Flag untuk status asesmen user aktif
-            assessmentDone: false
+            userAssessmentResult: null // Untuk menyimpan hasil cloud user
         };
 
         // --- INIT ---
         document.addEventListener('DOMContentLoaded', () => {
             const storedUser = localStorage.getItem('albannaUser');
+            
+            // Backup local load if firebase is slow
             const storedDB = localStorage.getItem('albannaStudents');
             if (storedDB) state.studentData = JSON.parse(storedDB);
             
@@ -455,7 +452,7 @@
 
             renderBooks();
             generateBulkInputs();
-            renderAssessmentForm(); // New render function
+            renderAssessmentForm(); 
             
             window.addEventListener('firebase-ready', () => {
                 setupRealtimeListeners();
@@ -517,37 +514,34 @@
             else if (score <= 10) category = "Pembaca Madya";
             else category = "Pembaca Mahir";
 
-            // Update local state
-            state.assessmentDone = true;
+            // Object result
+            const resultData = { 
+                name: state.user.name,
+                class: state.user.kelas,
+                category: category,
+                score: score,
+                total: totalQuestions,
+                timestamp: new Date().toISOString()
+            };
 
-            // Save result to LocalStorage immediately (backup and offline lock)
-            const resultData = { score, total: totalQuestions, category };
+            // Update local state immediate
+            state.userAssessmentResult = resultData;
+            
+            // Backup local
             const userKey = `${state.user.kelas}_${state.user.name.replace(/\s+/g, '_')}`;
             localStorage.setItem(`assessment_result_${userKey}`, JSON.stringify(resultData));
 
-            // UI Updates: HIDE FORM, SHOW RESULT
-            document.getElementById('assessment-questions-container').classList.add('hidden');
-            
-            document.getElementById('result-score').textContent = `${score}/${totalQuestions}`;
-            document.getElementById('result-category').textContent = category;
-            
-            const resultDiv = document.getElementById('assessment-result');
-            resultDiv.classList.remove('hidden');
-            resultDiv.scrollIntoView({ behavior: 'smooth' });
-            
+            // Force Update UI
+            checkAssessmentStatus();
+
             // Save to Cloud
             if (window.db && state.user) {
                 try {
-                    await window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'assessments', userKey), {
-                        name: state.user.name,
-                        class: state.user.kelas,
-                        category: category,
-                        score: score,
-                        timestamp: new Date().toISOString()
-                    });
+                    await window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'assessments', userKey), resultData);
                     updateDashboardGreeting(category);
                 } catch (err) {
                     console.error("Save failed", err);
+                    alert("Koneksi gagal, hasil tersimpan lokal.");
                 }
             } else {
                 updateDashboardGreeting(category);
@@ -559,7 +553,11 @@
             const greetingEl = document.getElementById('assessment-greeting');
             let category = manualCategory;
             
-            // Fallback for local storage
+            // Priority: Manual > State Cloud > Local Storage
+            if (!category && state.userAssessmentResult) {
+                category = state.userAssessmentResult.category;
+            }
+            
             if (!category && state.user) {
                 const userKey = `${state.user.kelas}_${state.user.name.replace(/\s+/g, '_')}`;
                 const saved = localStorage.getItem(`assessment_result_${userKey}`);
@@ -575,6 +573,8 @@
 
         function setupRealtimeListeners() {
             if (!window.db) return;
+            
+            // 1. Listen for Assessments
             const q = window.query(window.collection(window.db, 'artifacts', window.appId, 'public', 'data', 'assessments'));
             
             window.onSnapshot(q, (snapshot) => {
@@ -602,28 +602,29 @@
                     const listEl = document.getElementById(`list-${catKey}`);
                     if(listEl) listEl.innerHTML += li;
 
-                    // SYNC LOCK STATUS: If the current user is in the list, lock their assessment
+                    // SYNC LOCK STATUS: Cloud override local
                     if (state.user && data.name === state.user.name && data.class === state.user.class) {
-                        // Also save to localStorage to ensure lock persists on refresh even if offline momentarily
+                        state.userAssessmentResult = {
+                             score: data.score || 0, 
+                             total: data.total || 12, 
+                             category: data.category 
+                        };
+                        
+                        // Sync to local backup
                         const userKey = `${state.user.kelas}_${state.user.name.replace(/\s+/g, '_')}`;
-                        if (!localStorage.getItem(`assessment_result_${userKey}`)) {
-                             localStorage.setItem(`assessment_result_${userKey}`, JSON.stringify({ 
-                                 score: data.score || 0, 
-                                 total: 12, 
-                                 category: data.category 
-                             }));
-                        }
-                        // If we are currently on the assessment tab, refresh view to lock
+                        localStorage.setItem(`assessment_result_${userKey}`, JSON.stringify(state.userAssessmentResult));
+
+                        // Refresh view if on tab
                          if(state.currentTab === 'asesmen') {
                              checkAssessmentStatus();
                          }
+                         updateDashboardGreeting();
                     }
                 });
 
-                // Update Dashboard Highlights (Simple Logic)
+                // Update Dashboard Highlights
                 document.getElementById('dashboard-active-students').innerHTML = `<span class="text-3xl font-bold text-gray-800">${activeStudents}</span> Siswa`;
                 
-                // Find Top Class
                 let topClass = '-';
                 let maxCount = 0;
                 for (const [cls, count] of Object.entries(classCounts)) {
@@ -632,6 +633,21 @@
                 document.getElementById('dashboard-active-classes').innerHTML = topClass !== '-' ? 
                     `<span class="text-3xl font-bold text-gray-800">${topClass}</span> (${maxCount} Siswa)` : 
                     "Belum ada data";
+            });
+
+            // 2. Listen for Students Data (Database Siswa)
+            const docRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'students', 'master');
+            window.onSnapshot(docRef, (doc) => {
+                if(doc.exists()) {
+                    state.studentData = doc.data();
+                    // Sync to local
+                    localStorage.setItem('albannaStudents', JSON.stringify(state.studentData));
+                    // Refresh dropdown if on login page
+                    if(!state.user) {
+                        const classSelect = document.getElementById('input-class');
+                        if(classSelect.value) populateStudentNames();
+                    }
+                }
             });
         }
 
@@ -644,10 +660,12 @@
             }
         }
 
-        function addBulkStudents(e) {
+        async function addBulkStudents(e) {
             e.preventDefault();
             const targetClass = document.getElementById('db-bulk-class').value;
             if(!targetClass) { alert("Pilih kelas!"); return; }
+            
+            // Ensure object exists
             if (!state.studentData[targetClass]) state.studentData[targetClass] = [];
             
             const inputs = e.target.querySelectorAll('input[type="text"]');
@@ -659,14 +677,39 @@
                     count++;
                 }
             });
+
+            // Optimistic update
             localStorage.setItem('albannaStudents', JSON.stringify(state.studentData));
-            alert(`Berhasil menambahkan ${count} siswa ke ${targetClass}`);
+
+            // Cloud Save
+            if(window.db) {
+                try {
+                    const docRef = window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'students', 'master');
+                    await window.setDoc(docRef, state.studentData, { merge: true });
+                    alert(`Berhasil menyimpan ${count} siswa ke Cloud Database!`);
+                } catch(err) {
+                    console.error("Cloud save failed", err);
+                    alert("Gagal menyimpan ke Cloud, tersimpan di lokal.");
+                }
+            } else {
+                alert(`Tersimpan lokal (${count} siswa).`);
+            }
         }
 
         function populateStudentNames() {
             const cls = document.getElementById('input-class').value;
             const sel = document.getElementById('input-name');
+            const loading = document.getElementById('student-loading');
+            
             sel.innerHTML = '<option value="" disabled selected>-- Pilih Nama --</option>';
+            
+            // Show loading if empty and db active
+            if (Object.keys(state.studentData).length === 0 && window.db) {
+                 loading.classList.remove('hidden');
+                 // Wait a bit or let listener populate
+                 setTimeout(() => loading.classList.add('hidden'), 2000); 
+            }
+
             if (cls && state.studentData[cls]) {
                 state.studentData[cls].forEach(n => {
                     const opt = document.createElement('option');
@@ -674,7 +717,12 @@
                     sel.appendChild(opt);
                 });
                 sel.disabled = false; sel.classList.replace('bg-gray-100', 'bg-white');
-            } else { sel.disabled = true; }
+            } else { 
+                sel.disabled = true; 
+                if(cls && (!state.studentData[cls] || state.studentData[cls].length === 0)) {
+                   // Optional: Add empty placeholder
+                }
+            }
         }
 
         function handleLogin(e) {
@@ -692,6 +740,9 @@
             if(confirm('Keluar?')) {
                 localStorage.removeItem('albannaUser');
                 state.user = null;
+                // Clear local result state temporarily so next user doesn't see old data
+                state.userAssessmentResult = null; 
+                
                 document.getElementById('dashboard-view').classList.add('hidden');
                 document.getElementById('login-view').classList.remove('hidden');
                 document.getElementById('login-form').reset();
@@ -733,30 +784,33 @@
             if(active) active.className = active.className.replace('text-gray-600', 'bg-green-50 text-green-700');
         }
 
-        // --- NEW FUNCTION: Check if Assessment is Done ---
+        // --- CHECK IF ASSESSMENT DONE (Cloud + Local) ---
         function checkAssessmentStatus() {
             const container = document.getElementById('assessment-questions-container');
             const resultDiv = document.getElementById('assessment-result');
             
-            // Cek LocalStorage
-            const userKey = `${state.user.kelas}_${state.user.name.replace(/\s+/g, '_')}`;
-            const localResult = localStorage.getItem(`assessment_result_${userKey}`);
+            // 1. Check State (synced from cloud)
+            let result = state.userAssessmentResult;
 
-            if (localResult) {
+            // 2. Fallback Local Storage
+            if (!result && state.user) {
+                const userKey = `${state.user.kelas}_${state.user.name.replace(/\s+/g, '_')}`;
+                const localResult = localStorage.getItem(`assessment_result_${userKey}`);
+                if (localResult) result = JSON.parse(localResult);
+            }
+
+            if (result) {
                 // LOCK SOAL
                 container.classList.add('hidden');
                 
                 // SHOW RESULT
-                const res = JSON.parse(localResult);
-                document.getElementById('result-score').textContent = `${res.score}/${res.total}`;
-                document.getElementById('result-category').textContent = res.category;
+                document.getElementById('result-score').textContent = `${result.score}/${result.total || 12}`;
+                document.getElementById('result-category').textContent = result.category;
                 resultDiv.classList.remove('hidden');
             } else {
                 // SHOW SOAL, HIDE RESULT
                 container.classList.remove('hidden');
                 resultDiv.classList.add('hidden');
-                
-                // Reset form jika perlu
                 document.getElementById('assessment-form').reset();
             }
         }
