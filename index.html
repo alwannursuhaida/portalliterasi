@@ -250,11 +250,15 @@
                         </div>
                         
                         <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
-                            <form onsubmit="submitAssessment(event)" class="space-y-8" id="assessment-form">
-                                <!-- Konten Asesmen akan di-render oleh JS -->
-                            </form>
+                            <!-- QUESTION CONTAINER (Locked if done) -->
+                            <div id="assessment-questions-container">
+                                <form onsubmit="submitAssessment(event)" class="space-y-8" id="assessment-form">
+                                    <!-- Konten Asesmen akan di-render oleh JS -->
+                                </form>
+                            </div>
                             
-                            <div id="assessment-result" class="hidden mt-8 p-6 rounded-xl bg-green-50 border border-green-200 text-center relative overflow-hidden">
+                            <!-- RESULT CONTAINER (Hidden by default) -->
+                            <div id="assessment-result" class="hidden mt-0 p-6 rounded-xl bg-green-50 border border-green-200 text-center relative overflow-hidden">
                                 <div class="absolute top-0 right-0 p-4 opacity-10"><i class="fas fa-certificate text-6xl text-green-700"></i></div>
                                 <h3 class="text-lg font-semibold text-gray-600">Hasil Asesmen Kamu</h3>
                                 <div class="text-5xl font-bold text-green-600 my-4" id="result-score">0/12</div>
@@ -433,7 +437,9 @@
                         { id: 12, q: "Apa pelajaran dari cerita ini?", options: ["Pentingnya memeriksa jadwal/hari sebelum terburu-buru.", "Harus bangun jam 5.", "Jangan dengar orang tua.", "Sekolah harus buka tiap hari."], correct: 0 }
                     ]
                 }
-            ]
+            ],
+            // Flag untuk status asesmen user aktif
+            assessmentDone: false
         };
 
         // --- INIT ---
@@ -511,7 +517,17 @@
             else if (score <= 10) category = "Pembaca Madya";
             else category = "Pembaca Mahir";
 
-            // UI Updates
+            // Update local state
+            state.assessmentDone = true;
+
+            // Save result to LocalStorage immediately (backup and offline lock)
+            const resultData = { score, total: totalQuestions, category };
+            const userKey = `${state.user.kelas}_${state.user.name.replace(/\s+/g, '_')}`;
+            localStorage.setItem(`assessment_result_${userKey}`, JSON.stringify(resultData));
+
+            // UI Updates: HIDE FORM, SHOW RESULT
+            document.getElementById('assessment-questions-container').classList.add('hidden');
+            
             document.getElementById('result-score').textContent = `${score}/${totalQuestions}`;
             document.getElementById('result-category').textContent = category;
             
@@ -522,8 +538,7 @@
             // Save to Cloud
             if (window.db && state.user) {
                 try {
-                    const docId = `${state.user.kelas}_${state.user.name.replace(/\s+/g, '_')}`;
-                    await window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'assessments', docId), {
+                    await window.setDoc(window.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'assessments', userKey), {
                         name: state.user.name,
                         class: state.user.kelas,
                         category: category,
@@ -535,7 +550,6 @@
                     console.error("Save failed", err);
                 }
             } else {
-                localStorage.setItem(`assessment_${state.user.name}`, category);
                 updateDashboardGreeting(category);
             }
         }
@@ -544,10 +558,13 @@
         function updateDashboardGreeting(manualCategory = null) {
             const greetingEl = document.getElementById('assessment-greeting');
             let category = manualCategory;
-            if (!category && window.db) return; // Wait for listener
             
-            // Fallback for local storage if offline
-            if (!category) category = localStorage.getItem(`assessment_${state.user.name}`);
+            // Fallback for local storage
+            if (!category && state.user) {
+                const userKey = `${state.user.kelas}_${state.user.name.replace(/\s+/g, '_')}`;
+                const saved = localStorage.getItem(`assessment_result_${userKey}`);
+                if (saved) category = JSON.parse(saved).category;
+            }
 
             if (category) {
                 greetingEl.innerHTML = `Halo, kamu adalah <b>${category}</b>! <br><span class="text-sm opacity-90">Teruslah membaca untuk meningkatkan levelmu.</span>`;
@@ -584,6 +601,23 @@
                     const catKey = data.category.toLowerCase().replace('pembaca ', '');
                     const listEl = document.getElementById(`list-${catKey}`);
                     if(listEl) listEl.innerHTML += li;
+
+                    // SYNC LOCK STATUS: If the current user is in the list, lock their assessment
+                    if (state.user && data.name === state.user.name && data.class === state.user.class) {
+                        // Also save to localStorage to ensure lock persists on refresh even if offline momentarily
+                        const userKey = `${state.user.kelas}_${state.user.name.replace(/\s+/g, '_')}`;
+                        if (!localStorage.getItem(`assessment_result_${userKey}`)) {
+                             localStorage.setItem(`assessment_result_${userKey}`, JSON.stringify({ 
+                                 score: data.score || 0, 
+                                 total: 12, 
+                                 category: data.category 
+                             }));
+                        }
+                        // If we are currently on the assessment tab, refresh view to lock
+                         if(state.currentTab === 'asesmen') {
+                             checkAssessmentStatus();
+                         }
+                    }
                 });
 
                 // Update Dashboard Highlights (Simple Logic)
@@ -686,9 +720,45 @@
                 const nav = document.getElementById(`nav-${v}`);
                 if(nav) nav.className = nav.className.replace('bg-green-50 text-green-700', 'text-gray-600');
             });
-            document.getElementById(`view-${t}`).classList.remove('hidden');
+            
+            const viewEl = document.getElementById(`view-${t}`);
+            viewEl.classList.remove('hidden');
+            
+            // Logic khusus saat membuka tab asesmen
+            if (t === 'asesmen') {
+                checkAssessmentStatus();
+            }
+
             const active = document.getElementById(`nav-${t}`);
             if(active) active.className = active.className.replace('text-gray-600', 'bg-green-50 text-green-700');
+        }
+
+        // --- NEW FUNCTION: Check if Assessment is Done ---
+        function checkAssessmentStatus() {
+            const container = document.getElementById('assessment-questions-container');
+            const resultDiv = document.getElementById('assessment-result');
+            
+            // Cek LocalStorage
+            const userKey = `${state.user.kelas}_${state.user.name.replace(/\s+/g, '_')}`;
+            const localResult = localStorage.getItem(`assessment_result_${userKey}`);
+
+            if (localResult) {
+                // LOCK SOAL
+                container.classList.add('hidden');
+                
+                // SHOW RESULT
+                const res = JSON.parse(localResult);
+                document.getElementById('result-score').textContent = `${res.score}/${res.total}`;
+                document.getElementById('result-category').textContent = res.category;
+                resultDiv.classList.remove('hidden');
+            } else {
+                // SHOW SOAL, HIDE RESULT
+                container.classList.remove('hidden');
+                resultDiv.classList.add('hidden');
+                
+                // Reset form jika perlu
+                document.getElementById('assessment-form').reset();
+            }
         }
 
         function accessDatabase() {
