@@ -167,7 +167,7 @@
                                     <span class="bg-yellow-100 text-yellow-600 w-8 h-8 rounded-full flex items-center justify-center text-sm">
                                         <i class="fas fa-crown"></i>
                                     </span>
-                                    Siswa Terrajin Bulan Ini
+                                    Siswa Aktif Literasi
                                 </h3>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <!-- Putra -->
@@ -199,7 +199,7 @@
                                     <span class="bg-orange-100 text-orange-600 w-8 h-8 rounded-full flex items-center justify-center text-sm">
                                         <i class="fas fa-trophy"></i>
                                     </span>
-                                    Kelas Paling Aktif
+                                    Kelas Aktif Literasi
                                 </h3>
                                 <div class="space-y-3">
                                     <!-- Putra -->
@@ -278,18 +278,18 @@
                         </div>
                     </section>
 
-                    <!-- 2. KOLEKSI BUKU VIEW -->
+                    <!-- 2. KOLEKSI BUKU VIEW (External Links) -->
                     <section id="view-koleksi" class="hidden space-y-6 fade-in">
                         <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-2xl font-bold text-gray-800">Perpustakaan Digital</h2>
-                            <div class="relative">
-                                <input type="text" placeholder="Cari judul buku..." class="pl-10 pr-4 py-2 rounded-full border border-gray-300 text-sm focus:ring-2 focus:ring-green-500 outline-none w-64">
+                            <h2 class="text-2xl font-bold text-gray-800">Tautan Literasi Eksternal</h2>
+                            <div class="relative opacity-50 cursor-not-allowed hidden"> <!-- Hide search as it's not needed for 2 links -->
+                                <input disabled type="text" placeholder="Cari judul buku..." class="pl-10 pr-4 py-2 rounded-full border border-gray-300 text-sm focus:ring-2 focus:ring-green-500 outline-none w-64">
                                 <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-6" id="book-grid">
-                            <!-- Book Items injected by JS -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="book-grid">
+                            <!-- External Links injected by JS -->
                         </div>
                     </section>
 
@@ -357,13 +357,10 @@
         const state = {
             user: null, // { name: '', class: '' }
             currentTab: 'beranda',
+            // Updated Books to be External Links
             books: [
-                { id: 1, title: "Laskar Pelangi", author: "Andrea Hirata", category: "Novel", color: "bg-blue-100" },
-                { id: 2, title: "Negeri 5 Menara", author: "A. Fuadi", category: "Motivasi", color: "bg-red-100" },
-                { id: 3, title: "Sejarah Islam", author: "Prof. Hamka", category: "Sejarah", color: "bg-green-100" },
-                { id: 4, title: "Fisika Asyik", author: "Yohanes Surya", category: "Sains", color: "bg-yellow-100" },
-                { id: 5, title: "Bumi Manusia", author: "Pramoedya", category: "Sastra", color: "bg-orange-100" },
-                { id: 6, title: "Pulang", author: "Tere Liye", category: "Novel", color: "bg-purple-100" },
+                { id: 1, title: "SIBI", author: "Kemendikdasmen", category: "Portal Buku", color: "bg-blue-100", link: "https://buku.kemendikdasmen.go.id/" },
+                { id: 2, title: "Badan Pengembangan dan Pembinaan Bahasa", author: "Kemendikdasmen", category: "Portal Bahasa", color: "bg-green-100", link: "https://badanbahasa.kemendikdasmen.go.id/" },
             ],
             leaderboard: [
                 { name: "Ahmad Fulan", class: "9A", books: 24, points: 1200 },
@@ -372,7 +369,7 @@
                 { name: "Dewi Lestari", class: "9B", books: 15, points: 720 },
                 { name: "Rizky Ramadhan", class: "8A", books: 12, points: 600 },
             ],
-            // Data baru untuk Highlights (Siswa & Kelas Teraktif)
+            // Data Highlights (Siswa & Kelas Teraktif)
             highlights: {
                 students: {
                     male: { name: "Fatih Al-Ayyubi", class: "9A", books: 42 },
@@ -497,15 +494,16 @@
 
         function renderBooks() {
             const grid = document.getElementById('book-grid');
+            // Updated to render <a> tags for external links
             grid.innerHTML = state.books.map(book => `
-                <div class="bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition cursor-pointer border border-gray-100 group">
+                <a href="${book.link}" target="_blank" class="bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition cursor-pointer border border-gray-100 group block">
                     <div class="${book.color} h-40 rounded-lg mb-3 flex items-center justify-center text-4xl text-gray-400 group-hover:scale-105 transition transform">
-                        <i class="fas fa-book"></i>
+                        <i class="fas fa-external-link-alt"></i>
                     </div>
                     <h4 class="font-bold text-gray-800 truncate">${book.title}</h4>
                     <p class="text-xs text-gray-500 mb-2">${book.author}</p>
                     <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">${book.category}</span>
-                </div>
+                </a>
             `).join('');
         }
 
