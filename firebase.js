@@ -9,7 +9,7 @@ import { getFirestore, collection, doc,
          setDoc, getDoc, onSnapshot, query }    from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // =========================================================================
-// LENGKAPI BAGIAN YANG MASIH BERISI "PASTE_..._DI_SINI"
+// KONFIGURASI FIREBASE CLOUD (LITERASI SMP ALBANNA)
 // =========================================================================
 const firebaseConfig = {
   apiKey: "AIzaSyADXT-6JH1eu6lcbnitFVla6ba5I6A37ds",
@@ -20,7 +20,7 @@ const firebaseConfig = {
   appId: "1:902222243000:web:bb01744327e05e44a5804d"
 };
 
-// ID unik untuk memisahkan data aplikasi Anda di database
+// ID unik untuk memisahkan data aplikasi
 const appId = "literasismpalbanna"; 
 
 async function initFirebase() {
@@ -29,7 +29,7 @@ async function initFirebase() {
     const auth = getAuth(app);
     const db   = getFirestore(app);
 
-    // Kita gunakan login anonim di latar belakang agar aman mengakses Firestore
+    // Login anonim (pastikan sudah diaktifkan di menu Authentication Firebase!)
     await signInAnonymously(auth);
 
     // Ekspos API terbatas ke app.js
@@ -40,12 +40,13 @@ async function initFirebase() {
       onSnapshot, query,
     };
 
-    // Beritahu app.js bahwa Firebase sudah siap
     window.dispatchEvent(new CustomEvent('firebase-ready', { detail: { ok: true } }));
     console.log("[Firebase] Berhasil terhubung ke Cloud Database.");
 
   } catch (err) {
     console.error("[Firebase] Gagal inisialisasi:", err);
+    // TAMPILKAN ERROR KE LAYAR AGAR KITA TAHU PENYEBABNYA
+    alert("Gagal terhubung ke Firebase. Alasan: " + err.message);
     window.dispatchEvent(new CustomEvent('firebase-ready', { detail: { ok: false } }));
   }
 }
