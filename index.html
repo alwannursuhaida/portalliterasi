@@ -67,7 +67,13 @@
           Masuk Portal <i class="fas fa-arrow-right ml-2"></i>
         </button>
       </div>
-      <div class="mt-6 text-center text-xs text-gray-400">&copy; 2025 Perpustakaan SMP Albanna</div>
+      
+      <!-- REVISI 2: Menu Database / Admin dipindah ke sini -->
+      <div class="mt-6 text-center text-xs text-gray-400">
+        &copy; 2025 Perpustakaan SMP Albanna 
+        <span class="mx-2">|</span> 
+        <button onclick="accessDatabase()" class="hover:text-gray-600 transition font-medium"><i class="fas fa-lock"></i> Admin</button>
+      </div>
     </div>
   </div>
 
@@ -101,12 +107,7 @@
         <button onclick="switchTab('jurnal')" id="nav-jurnal" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg">
           <i class="fas fa-pen-fancy w-5"></i> Tulis Jurnal
         </button>
-        <div class="pt-4 mt-4 border-t border-gray-100">
-          <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Admin Area</p>
-          <button onclick="accessDatabase()" id="nav-database" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:bg-red-50 hover:text-red-600">
-            <i class="fas fa-lock w-5"></i> Database
-          </button>
-        </div>
+        <!-- REVISI 2: Menu Admin dihapus dari bagian sidebar ini -->
       </nav>
       <div class="p-4 border-t border-gray-200 bg-gray-50">
         <div class="flex items-center gap-3 mb-3">
@@ -189,24 +190,26 @@
         <section id="view-kategori" class="hidden fade-in">
           <h2 class="text-2xl font-bold text-gray-800 mb-6">Peta Literasi Sekolah</h2>
           <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            
+            <!-- REVISI 1: Tambahan span id="count-*" pada setiap kategori -->
             <div class="bg-white p-4 rounded-xl border-t-4 border-red-200 shadow-sm min-h-[200px]">
-              <h3 class="font-bold text-gray-700 text-center mb-4 text-sm uppercase">Pembaca Dini</h3>
+              <h3 class="font-bold text-gray-700 text-center mb-4 text-sm uppercase">Pembaca Dini <span id="count-dini" class="ml-2 bg-red-100 text-red-600 py-0.5 px-2 rounded-full text-xs">0</span></h3>
               <ul id="list-dini" class="space-y-2 text-xs text-gray-600"></ul>
             </div>
             <div class="bg-white p-4 rounded-xl border-t-4 border-orange-200 shadow-sm min-h-[200px]">
-              <h3 class="font-bold text-gray-700 text-center mb-4 text-sm uppercase">Pembaca Awal</h3>
+              <h3 class="font-bold text-gray-700 text-center mb-4 text-sm uppercase">Pembaca Awal <span id="count-awal" class="ml-2 bg-orange-100 text-orange-600 py-0.5 px-2 rounded-full text-xs">0</span></h3>
               <ul id="list-awal" class="space-y-2 text-xs text-gray-600"></ul>
             </div>
             <div class="bg-white p-4 rounded-xl border-t-4 border-yellow-200 shadow-sm min-h-[200px]">
-              <h3 class="font-bold text-gray-700 text-center mb-4 text-sm uppercase">Pembaca Semenjana</h3>
+              <h3 class="font-bold text-gray-700 text-center mb-4 text-sm uppercase">Pembaca Semenjana <span id="count-semenjana" class="ml-2 bg-yellow-100 text-yellow-600 py-0.5 px-2 rounded-full text-xs">0</span></h3>
               <ul id="list-semenjana" class="space-y-2 text-xs text-gray-600"></ul>
             </div>
             <div class="bg-white p-4 rounded-xl border-t-4 border-green-200 shadow-sm min-h-[200px]">
-              <h3 class="font-bold text-gray-700 text-center mb-4 text-sm uppercase">Pembaca Madya</h3>
+              <h3 class="font-bold text-gray-700 text-center mb-4 text-sm uppercase">Pembaca Madya <span id="count-madya" class="ml-2 bg-green-100 text-green-600 py-0.5 px-2 rounded-full text-xs">0</span></h3>
               <ul id="list-madya" class="space-y-2 text-xs text-gray-600"></ul>
             </div>
             <div class="bg-white p-4 rounded-xl border-t-4 border-blue-200 shadow-sm min-h-[200px]">
-              <h3 class="font-bold text-gray-700 text-center mb-4 text-sm uppercase">Pembaca Mahir</h3>
+              <h3 class="font-bold text-gray-700 text-center mb-4 text-sm uppercase">Pembaca Mahir <span id="count-mahir" class="ml-2 bg-blue-100 text-blue-600 py-0.5 px-2 rounded-full text-xs">0</span></h3>
               <ul id="list-mahir" class="space-y-2 text-xs text-gray-600"></ul>
             </div>
           </div>
@@ -230,10 +233,28 @@
               <label class="block text-sm font-medium text-gray-700 mb-1">Penulis</label>
               <input id="jurnal-penulis" type="text" class="w-full border-gray-300 rounded-lg shadow-sm border p-2 focus:ring-green-500 focus:border-green-500 outline-none">
             </div>
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-1">Ringkasan</label>
-              <textarea id="jurnal-ringkasan" rows="4" class="w-full border-gray-300 rounded-lg shadow-sm border p-2 focus:ring-green-500 focus:border-green-500 outline-none"></textarea>
+            
+            <!-- REVISI 3: Dua Kolom Halaman -->
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Dari Halaman</label>
+                <input id="jurnal-hal-awal" type="number" min="1" class="w-full border-gray-300 rounded-lg shadow-sm border p-2 focus:ring-green-500 focus:border-green-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Sampai Halaman</label>
+                <input id="jurnal-hal-akhir" type="number" min="1" class="w-full border-gray-300 rounded-lg shadow-sm border p-2 focus:ring-green-500 focus:border-green-500 outline-none">
+              </div>
             </div>
+
+            <!-- REVISI 3: Pertanyaan Pemahaman dan Batas Kata -->
+            <div class="mb-4">
+              <div class="flex justify-between items-end mb-1">
+                <label class="block text-sm font-medium text-gray-700">Apa yang kamu fahami dari bacaan buku tersebut?</label>
+                <span id="word-counter" class="text-xs font-bold text-red-500">0 / 50 kata minimal</span>
+              </div>
+              <textarea id="jurnal-ringkasan" rows="5" placeholder="Tuliskan pemahamanmu di sini..." oninput="countWords()" class="w-full border-gray-300 rounded-lg shadow-sm border p-2 focus:ring-green-500 focus:border-green-500 outline-none"></textarea>
+            </div>
+            
             <button onclick="submitJournal()" class="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 transition">Kirim Jurnal</button>
           </div>
         </section>
@@ -245,7 +266,8 @@
               <h2 class="text-2xl font-bold text-gray-800">Database Siswa (Input Massal)</h2>
               <p class="text-sm text-gray-500">Masukkan nama siswa ke dalam kotak yang tersedia (Max 30 sekaligus)</p>
             </div>
-            <button onclick="switchTab('beranda')" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
+            <!-- Modifikasi tombol close (silang) untuk logout admin dan kembali ke halaman login -->
+            <button onclick="handleLogout()" class="text-gray-500 hover:text-red-500" title="Keluar Mode Admin"><i class="fas fa-times text-2xl"></i></button>
           </div>
           <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
             <div class="mb-6 max-w-xs">
