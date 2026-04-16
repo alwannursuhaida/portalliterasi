@@ -43,6 +43,19 @@ async function initFirebase() {
     window.dispatchEvent(new CustomEvent('firebase-ready', { detail: { ok: true } }));
     console.log("[Firebase] Berhasil terhubung ke Cloud Database.");
 
+    // === TEST PENYIMPANAN OTOMATIS ===
+    // Kode ini ditambahkan untuk mendiagnosis mengapa data Anda tidak masuk
+    try {
+      console.log("[Firebase] Mencoba test tulis ke database...");
+      const testRef = doc(db, 'artifacts', 'test_koneksi');
+      await setDoc(testRef, { pesan: "Database berhasil ditulis!", waktu: new Date().toISOString() });
+      console.log("[Firebase] Test tulis BERHASIL. Aturan (Rules) sudah benar.");
+    } catch (writeErr) {
+      console.error("[Firebase] Test tulis GAGAL:", writeErr);
+      alert("Koneksi Firebase berhasil, tapi GAGAL MENYIMPAN.\n\nPastikan tab 'Rules' (Aturan) di Firestore benar-benar tertulis 'allow read, write: if true;' dan Anda sudah klik tombol PUBLISH.\n\nKode Error: " + writeErr.code);
+    }
+    // =================================
+
   } catch (err) {
     console.error("[Firebase] Gagal inisialisasi:", err);
     // TAMPILKAN ERROR KE LAYAR AGAR KITA TAHU PENYEBABNYA
