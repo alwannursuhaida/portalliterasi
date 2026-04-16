@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Literasi SMP Albanna</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-50 text-gray-800 h-screen overflow-hidden">
+
+<div id="app" class="h-full w-full relative">
+
+  <!-- ==================== LOGIN ==================== -->
+  <div id="login-view" class="h-full w-full flex items-center justify-center bg-gradient-to-br from-green-500 to-teal-700 p-4">
+    <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md fade-in relative overflow-hidden">
+      <div class="absolute top-0 left-0 w-full h-2 bg-yellow-400"></div>
+      <div class="text-center mb-8">
+        <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600">
+          <i class="fas fa-book-reader text-3xl"></i>
+        </div>
+        <h1 class="text-2xl font-bold text-gray-800">Portal Literasi</h1>
+        <p class="text-sm text-gray-500 font-medium tracking-widest">SMP ALBANNA</p>
+      </div>
+      <div class="space-y-5">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Kelas</label>
+          <div class="relative">
+            <i class="fas fa-school absolute left-3 top-3 text-gray-400"></i>
+            <select id="input-class" required onchange="populateStudentNames()"
+              class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none transition bg-white appearance-none">
+              <option value="" disabled selected>-- Pilih Kelas --</option>
+              <optgroup label="Kelas 7">
+                <option value="7A">7A (Putra)</option><option value="7B">7B (Putra)</option><option value="7C">7C (Putra)</option>
+                <option value="7D">7D (Putri)</option><option value="7E">7E (Putri)</option><option value="7F">7F (Putri)</option>
+              </optgroup>
+              <optgroup label="Kelas 8">
+                <option value="8A">8A (Putra)</option><option value="8B">8B (Putra)</option><option value="8C">8C (Putra)</option>
+                <option value="8D">8D (Putri)</option><option value="8E">8E (Putri)</option><option value="8F">8F (Putri)</option>
+              </optgroup>
+              <optgroup label="Kelas 9">
+                <option value="9A">9A (Putra)</option><option value="9B">9B (Putra)</option><option value="9C">9C (Putra)</option>
+                <option value="9D">9D (Putri)</option><option value="9E">9E (Putri)</option>
+              </optgroup>
+            </select>
+            <i class="fas fa-chevron-down absolute right-3 top-3 text-gray-400 pointer-events-none"></i>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nama Siswa</label>
+          <div class="relative">
+            <i class="fas fa-user absolute left-3 top-3 text-gray-400"></i>
+            <select id="input-name" required disabled
+              class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none transition bg-gray-100 appearance-none cursor-not-allowed">
+              <option value="" disabled selected>-- Pilih Kelas Terlebih Dahulu --</option>
+            </select>
+            <i class="fas fa-chevron-down absolute right-3 top-3 text-gray-400 pointer-events-none"></i>
+            <div id="student-loading" class="hidden absolute right-10 top-3">
+              <i class="fas fa-circle-notch fa-spin text-green-500"></i>
+            </div>
+          </div>
+        </div>
+        <button onclick="handleLogin()"
+          class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow-lg transition transform hover:-translate-y-1">
+          Masuk Portal <i class="fas fa-arrow-right ml-2"></i>
+        </button>
+      </div>
+      <div class="mt-6 text-center text-xs text-gray-400">&copy; 2025 Perpustakaan SMP Albanna</div>
+    </div>
+  </div>
+
+  <!-- ==================== DASHBOARD ==================== -->
+  <div id="dashboard-view" class="hidden h-full flex-col md:flex-row">
+
+    <!-- Sidebar -->
+    <aside class="w-full md:w-64 bg-white border-r border-gray-200 flex flex-col h-auto md:h-full z-20">
+      <div class="p-6 border-b border-gray-100 flex items-center gap-3">
+        <div class="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center text-white shadow-lg">
+          <i class="fas fa-book-open"></i>
+        </div>
+        <div>
+          <h2 class="font-bold text-gray-800 leading-tight">Literasi</h2>
+          <span class="text-xs text-green-600 font-semibold">SMP ALBANNA</span>
+        </div>
+      </div>
+      <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+        <button onclick="switchTab('beranda')" id="nav-beranda" class="nav-item active w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg">
+          <i class="fas fa-home w-5"></i> Beranda
+        </button>
+        <button onclick="switchTab('asesmen')" id="nav-asesmen" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg">
+          <i class="fas fa-clipboard-check w-5"></i> Asesmen
+        </button>
+        <button onclick="switchTab('kategori')" id="nav-kategori" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg">
+          <i class="fas fa-map w-5"></i> Peta Literasi
+        </button>
+        <button onclick="switchTab('koleksi')" id="nav-koleksi" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg">
+          <i class="fas fa-swatchbook w-5"></i> Koleksi Buku
+        </button>
+        <button onclick="switchTab('jurnal')" id="nav-jurnal" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg">
+          <i class="fas fa-pen-fancy w-5"></i> Tulis Jurnal
+        </button>
+        <div class="pt-4 mt-4 border-t border-gray-100">
+          <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Admin Area</p>
+          <button onclick="accessDatabase()" id="nav-database" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:bg-red-50 hover:text-red-600">
+            <i class="fas fa-lock w-5"></i> Database
+          </button>
+        </div>
+      </nav>
+      <div class="p-4 border-t border-gray-200 bg-gray-50">
+        <div class="flex items-center gap-3 mb-3">
+          <div id="user-avatar" class="w-10 h-10 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 flex items-center justify-center text-white font-bold"></div>
+          <div class="overflow-hidden">
+            <p class="text-sm font-bold text-gray-800 truncate" id="display-name">Siswa</p>
+            <p class="text-xs text-gray-500" id="display-class">Kelas</p>
+          </div>
+        </div>
+        <button onclick="handleLogout()" class="w-full text-xs flex items-center justify-center gap-2 text-red-500 hover:text-red-700 py-2 border border-red-200 rounded hover:bg-red-50 transition">
+          <i class="fas fa-sign-out-alt"></i> Keluar
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 bg-gray-50 relative overflow-hidden flex flex-col h-full">
+      <header class="md:hidden bg-white p-4 flex justify-between items-center shadow-sm">
+        <span class="font-bold text-green-700">Portal Albanna</span>
+        <button class="text-gray-500"><i class="fas fa-bars"></i></button>
+      </header>
+
+      <div id="main-scroll" class="flex-1 overflow-y-auto p-4 md:p-8">
+
+        <!-- BERANDA -->
+        <section id="view-beranda" class="space-y-6 fade-in">
+          <div class="bg-gradient-to-r from-green-600 to-teal-600 rounded-2xl p-6 md:p-10 text-white shadow-lg relative overflow-hidden">
+            <div class="absolute right-0 top-0 opacity-10 transform translate-x-10 -translate-y-10">
+              <i class="fas fa-book text-9xl"></i>
+            </div>
+            <h2 class="text-2xl md:text-3xl font-bold mb-2">Ahlan Wa Sahlan, <span id="welcome-name">Siswa</span>! 👋</h2>
+            <p id="assessment-greeting" class="text-green-100 max-w-lg mb-4 text-lg">Yuk mulai petualangan membaca kamu!</p>
+            <div class="mt-6 flex gap-3">
+              <button onclick="switchTab('asesmen')" class="bg-yellow-400 text-yellow-900 px-5 py-2 rounded-lg font-bold shadow hover:bg-yellow-300 transition">
+                <i class="fas fa-clipboard-check mr-2"></i> Cek Level Membaca
+              </button>
+              <button onclick="switchTab('koleksi')" class="bg-white bg-opacity-20 text-white border border-white px-5 py-2 rounded-lg font-semibold hover:bg-opacity-30 transition">Cari Buku</button>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <span class="bg-yellow-100 text-yellow-600 w-8 h-8 rounded-full flex items-center justify-center text-sm"><i class="fas fa-crown"></i></span>
+                Siswa Aktif Literasi
+              </h3>
+              <div id="dashboard-active-students" class="text-gray-400 text-sm italic text-center py-4">Data belum tersedia.</div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <span class="bg-orange-100 text-orange-600 w-8 h-8 rounded-full flex items-center justify-center text-sm"><i class="fas fa-trophy"></i></span>
+                Kelas Aktif Literasi
+              </h3>
+              <div id="dashboard-active-classes" class="text-gray-400 text-sm italic text-center py-4">Data belum tersedia.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ASESMEN -->
+        <section id="view-asesmen" class="hidden fade-in max-w-4xl mx-auto">
+          <div class="text-center mb-8">
+            <h2 class="text-2xl font-bold text-gray-800">Asesmen Literasi Membaca</h2>
+            <p class="text-gray-500">Jawablah pertanyaan berikut dengan jujur untuk mengetahui level membaca kamu.</p>
+          </div>
+          <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+            <div id="assessment-questions-container"></div>
+            <div id="assessment-result" class="hidden p-6 rounded-xl bg-green-50 border border-green-200 text-center relative overflow-hidden">
+              <div class="absolute top-0 right-0 p-4 opacity-10"><i class="fas fa-certificate text-6xl text-green-700"></i></div>
+              <h3 class="text-lg font-semibold text-gray-600">Hasil Asesmen Kamu</h3>
+              <div class="text-5xl font-bold text-green-600 my-4" id="result-score">0/12</div>
+              <p class="text-gray-600">Selamat! Kategori Membaca kamu adalah:</p>
+              <h2 class="text-3xl font-bold text-green-800 mt-2 uppercase tracking-wide" id="result-category">...</h2>
+              <p class="text-sm text-gray-500 mt-4 bg-white inline-block px-4 py-1 rounded-full shadow-sm">
+                <i class="fas fa-check-circle text-green-500 mr-1"></i> Data telah disimpan ke database.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- PETA LITERASI -->
+        <section id="view-kategori" class="hidden fade-in">
+          <h2 class="text-2xl font-bold text-gray-800 mb-6">Peta Literasi Sekolah</h2>
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div class="bg-white p-4 rounded-xl border-t-4 border-red-200 shadow-sm min-h-[200px]">
+              <h3 class="font-bold text-gray-700 text-center mb-4 text-sm uppercase">Pembaca Dini</h3>
+              <ul id="list-dini" class="space-y-2 text-xs text-gray-600"></ul>
+            </div>
+            <div class="bg-white p-4 rounded-xl border-t-4 border-orange-200 shadow-sm min-h-[200px]">
+              <h3 class="font-bold text-gray-700 text-center mb-4 text-sm uppercase">Pembaca Awal</h3>
+              <ul id="list-awal" class="space-y-2 text-xs text-gray-600"></ul>
+            </div>
+            <div class="bg-white p-4 rounded-xl border-t-4 border-yellow-200 shadow-sm min-h-[200px]">
+              <h3 class="font-bold text-gray-700 text-center mb-4 text-sm uppercase">Pembaca Semenjana</h3>
+              <ul id="list-semenjana" class="space-y-2 text-xs text-gray-600"></ul>
+            </div>
+            <div class="bg-white p-4 rounded-xl border-t-4 border-green-200 shadow-sm min-h-[200px]">
+              <h3 class="font-bold text-gray-700 text-center mb-4 text-sm uppercase">Pembaca Madya</h3>
+              <ul id="list-madya" class="space-y-2 text-xs text-gray-600"></ul>
+            </div>
+            <div class="bg-white p-4 rounded-xl border-t-4 border-blue-200 shadow-sm min-h-[200px]">
+              <h3 class="font-bold text-gray-700 text-center mb-4 text-sm uppercase">Pembaca Mahir</h3>
+              <ul id="list-mahir" class="space-y-2 text-xs text-gray-600"></ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- KOLEKSI BUKU -->
+        <section id="view-koleksi" class="hidden space-y-6 fade-in">
+          <h2 class="text-2xl font-bold text-gray-800 mb-6">Tautan Literasi Eksternal</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="book-grid"></div>
+        </section>
+
+        <!-- JURNAL -->
+        <section id="view-jurnal" class="hidden fade-in max-w-2xl mx-auto">
+          <h2 class="text-2xl font-bold text-gray-800 mb-6">Tulis Jurnal Literasi</h2>
+          <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Judul Buku</label>
+              <input id="jurnal-judul" type="text" class="w-full border-gray-300 rounded-lg shadow-sm border p-2 focus:ring-green-500 focus:border-green-500 outline-none">
+            </div>
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Penulis</label>
+              <input id="jurnal-penulis" type="text" class="w-full border-gray-300 rounded-lg shadow-sm border p-2 focus:ring-green-500 focus:border-green-500 outline-none">
+            </div>
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Ringkasan</label>
+              <textarea id="jurnal-ringkasan" rows="4" class="w-full border-gray-300 rounded-lg shadow-sm border p-2 focus:ring-green-500 focus:border-green-500 outline-none"></textarea>
+            </div>
+            <button onclick="submitJournal()" class="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 transition">Kirim Jurnal</button>
+          </div>
+        </section>
+
+        <!-- DATABASE ADMIN -->
+        <section id="view-database" class="hidden fade-in max-w-5xl mx-auto">
+          <div class="flex justify-between items-center mb-6">
+            <div>
+              <h2 class="text-2xl font-bold text-gray-800">Database Siswa (Input Massal)</h2>
+              <p class="text-sm text-gray-500">Masukkan nama siswa ke dalam kotak yang tersedia (Max 30 sekaligus)</p>
+            </div>
+            <button onclick="switchTab('beranda')" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
+          </div>
+          <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div class="mb-6 max-w-xs">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Kelas Target</label>
+              <select id="db-bulk-class" class="w-full border-gray-300 rounded-lg shadow-sm p-2 border bg-white font-bold text-gray-700">
+                <option value="" disabled selected>-- Pilih Kelas --</option>
+                <option value="7A">7A (Putra)</option><option value="7B">7B (Putra)</option><option value="7C">7C (Putra)</option>
+                <option value="7D">7D (Putri)</option><option value="7E">7E (Putri)</option><option value="7F">7F (Putri)</option>
+                <option value="8A">8A (Putra)</option><option value="8B">8B (Putra)</option><option value="8C">8C (Putra)</option>
+                <option value="8D">8D (Putri)</option><option value="8E">8E (Putri)</option><option value="8F">8F (Putri)</option>
+                <option value="9A">9A (Putra)</option><option value="9B">9B (Putra)</option><option value="9C">9C (Putra)</option>
+                <option value="9D">9D (Putri)</option><option value="9E">9E (Putri)</option>
+              </select>
+            </div>
+            <h4 class="text-sm font-bold text-gray-600 mb-3">Input Nama Siswa (30 Kolom)</h4>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6" id="bulk-inputs"></div>
+            <button onclick="addBulkStudents()" class="w-full md:w-auto px-8 bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">
+              <i class="fas fa-save mr-2"></i> Simpan Data ke Kelas (Cloud)
+            </button>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Firebase (module, non-blocking) -->
+<script type="module" src="firebase.js"></script>
+<!-- App Logic -->
+<script src="app.js" defer></script>
+</body>
+</html>

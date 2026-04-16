@@ -1,0 +1,52 @@
+/* ===== BASE ===== */
+body {
+  font-family: 'Poppins', sans-serif;
+}
+
+/* ===== ANIMATIONS ===== */
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar       { width: 8px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #10B981; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #059669; }
+
+/* ===== GLASS ===== */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+}
+
+/* ===== NAV ITEMS ===== */
+.nav-item {
+  color: #4B5563; /* gray-600 */
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.nav-item:hover {
+  background-color: #F9FAFB; /* gray-50 */
+}
+
+.nav-item.active {
+  background-color: #ECFDF5; /* green-50 */
+  color: #15803D;             /* green-700 */
+}
+
+/* ===== ASSESSMENT: radio label highlight ===== */
+.assessment-option input[type="radio"]:checked + span {
+  font-weight: 600;
+  color: #15803D;
+}
+
+.assessment-option:has(input[type="radio"]:checked) {
+  background-color: #ECFDF5;
+  border-color: #86EFAC;
+}
