@@ -2,17 +2,17 @@
  * app.js — Portal Literasi SMP Albanna
  *
  * Struktur:
- *  1. KONSTANTA & DATA STATIS
- *  2. STATE
- *  3. STORAGE HELPERS
- *  4. AUTH / LOGIN / LOGOUT
- *  5. NAVIGASI (switchTab)
- *  6. ASESMEN
- *  7. JURNAL
- *  8. DATABASE ADMIN
- *  9. RENDER HELPERS (buku, sidebar)
+ * 1. KONSTANTA & DATA STATIS
+ * 2. STATE
+ * 3. STORAGE HELPERS
+ * 4. AUTH / LOGIN / LOGOUT
+ * 5. NAVIGASI (switchTab)
+ * 6. ASESMEN
+ * 7. JURNAL
+ * 8. DATABASE ADMIN
+ * 9. RENDER HELPERS (buku, sidebar)
  * 10. FIREBASE REALTIME LISTENERS
- * 11. INIT
+ * 11. INIT & GLOBAL EXPORTS
  */
 
 // ─────────────────────────────────────────────
@@ -75,10 +75,10 @@ const ASSESSMENT_DATA = [
   },
 ];
 
-// Hitung total soal sekali saja, tidak perlu dihitung ulang tiap submit
+// Hitung total soal sekali saja
 const TOTAL_QUESTIONS = ASSESSMENT_DATA.reduce((sum, s) => sum + s.questions.length, 0);
 
-// Kategori berdasarkan skor (urutan descending untuk mudah di-loop)
+// Kategori berdasarkan skor
 const SCORE_CATEGORIES = [
   { min: 11, label: "Pembaca Mahir" },
   { min: 9,  label: "Pembaca Madya" },
@@ -102,11 +102,8 @@ const state = {
 // 3. STORAGE HELPERS
 // ─────────────────────────────────────────────
 
-/**
- * Membuat key unik per user untuk localStorage.
- * Menggunakan encodeURIComponent agar spasi/karakter khusus aman.
- */
 function userStorageKey(prefix) {
+  if (!state.user) return prefix;
   const { name, kelas } = state.user;
   return `${prefix}__${kelas}__${encodeURIComponent(name)}`;
 }
@@ -298,10 +295,10 @@ async function submitAssessment() {
 
   state.userAssessmentResult = result;
   saveAssessment(result);
-  checkAssessmentStatus();       // Langsung tampilkan hasil
+  checkAssessmentStatus();       
   updateDashboardGreeting();
 
-  // Simpan ke cloud (non-blocking)
+  // Simpan ke cloud
   if (window.FB) {
     const key    = `${state.user.kelas}_${encodeURIComponent(state.user.name)}`;
     const docRef = window.FB.doc(window.FB.db, 'artifacts', window.FB.appId, 'public', 'data', 'assessments', key);
@@ -344,21 +341,47 @@ function updateDashboardGreeting() {
 // 7. JURNAL
 // ─────────────────────────────────────────────
 
+function countWords() {
+  const text = document.getElementById('jurnal-ringkasan').value.trim();
+  const wordCount = text === "" ? 0 : text.split(/\s+/).length;
+  const counterEl = document.getElementById('word-counter');
+  
+  counterEl.textContent = `${wordCount} kata`;
+  if (wordCount < 50) {
+    counterEl.className = "text-xs font-bold text-red-500";
+  } else {
+    counterEl.className = "text-xs font-bold text-green-600";
+  }
+}
+
 function submitJournal() {
-  const judul     = document.getElementById('jurnal-judul').value.trim();
-  const penulis   = document.getElementById('jurnal-penulis').value.trim();
+  const judul = document.getElementById('jurnal-judul').value.trim();
+  const penulis = document.getElementById('jurnal-penulis').value.trim();
+  const halAwal = document.getElementById('jurnal-hal-awal').value.trim();
+  const halAkhir = document.getElementById('jurnal-hal-akhir').value.trim();
   const ringkasan = document.getElementById('jurnal-ringkasan').value.trim();
 
-  if (!judul || !penulis || !ringkasan) {
-    alert("Semua kolom jurnal harus diisi.");
+  if (!judul || !penulis || !halAwal || !halAkhir || !ringkasan) {
+    alert("Semua kolom jurnal harus diisi, termasuk halaman.");
     return;
   }
 
-  // TODO: simpan ke Firestore
+  const wordCount = ringkasan === "" ? 0 : ringkasan.split(/\s+/).length;
+  if (wordCount < 50) {
+    alert(`Pemahaman Anda baru ${wordCount} kata. Minimal 50 kata.`);
+    return;
+  }
+
+  // Optional: Simpan ke Firebase bisa ditambahkan di sini nantinya
   alert("Jurnal berhasil dikirim!");
-  document.getElementById('jurnal-judul').value     = '';
-  document.getElementById('jurnal-penulis').value   = '';
+  
+  // Reset Form
+  document.getElementById('jurnal-judul').value = '';
+  document.getElementById('jurnal-penulis').value = '';
+  document.getElementById('jurnal-hal-awal').value = '';
+  document.getElementById('jurnal-hal-akhir').value = '';
   document.getElementById('jurnal-ringkasan').value = '';
+  countWords(); // Reset counter
   switchTab('beranda');
 }
 
@@ -366,32 +389,26 @@ function submitJournal() {
 // 8. DATABASE ADMIN
 // ─────────────────────────────────────────────
 
-/**
- * KEAMANAN: Password tidak pernah disimpan di sini.
- * Cocokkan dengan hash SHA-256 dari password sebenarnya.
- * Untuk produksi, gunakan Firebase Auth dengan role admin.
- *
- * Hash di bawah adalah SHA-256 dari "admin123" — ganti dengan
- * password yang lebih kuat dan hash yang sesuai.
- */
-const ADMIN_HASH = "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9"; // SHA-256("admin123")
-
-async function sha256(message) {
-  const msgBuffer   = new TextEncoder().encode(message);
-  const hashBuffer  = await crypto.subtle.digest('SHA-256', msgBuffer);
-  const hashArray   = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function accessDatabase() {
-  const input = prompt("Password Admin:");
+function accessDatabase() {
+  const input = prompt("Masukkan Password Admin:");
   if (!input) return;
 
-  const hash = await sha256(input);
-  if (hash === ADMIN_HASH) {
+  // Validasi password admin
+  if (input === "tumbler albanna") {
+    // Tampilkan dashboard
+    document.getElementById('login-view').classList.add('hidden');
+    document.getElementById('dashboard-view').classList.remove('hidden');
+    document.getElementById('dashboard-view').classList.add('flex');
+    
+    // Set identitas sebagai admin
+    document.getElementById('display-name').textContent = "Administrator";
+    document.getElementById('display-class').textContent = "Sistem Kontrol";
+    document.getElementById('user-avatar').textContent = "AD";
+
+    // Arahkan langsung ke tab database
     switchTab('database');
   } else {
-    alert("Password salah.");
+    alert("Akses ditolak. Password tidak valid.");
   }
 }
 
@@ -470,10 +487,6 @@ function renderBooks() {
 // 10. FIREBASE REALTIME LISTENERS
 // ─────────────────────────────────────────────
 
-/**
- * Dipanggil saat event 'firebase-ready' diterima.
- * Memisahkan listener Firebase dari logika UI.
- */
 function setupRealtimeListeners() {
   if (!window.FB) return;
 
@@ -483,6 +496,9 @@ function setupRealtimeListeners() {
   );
 
   window.FB.onSnapshot(assessmentsQuery, (snapshot) => {
+    // Siapkan object untuk menghitung jumlah tiap kategori
+    const counters = { dini: 0, awal: 0, semenjana: 0, madya: 0, mahir: 0 };
+
     // Reset daftar kategori
     ['dini', 'awal', 'semenjana', 'madya', 'mahir'].forEach(c => {
       const el = document.getElementById(`list-${c}`);
@@ -497,8 +513,14 @@ function setupRealtimeListeners() {
       activeStudents++;
       classCounts[data.class] = (classCounts[data.class] || 0) + 1;
 
-      // Masukkan ke list kategori
       const catKey = data.category?.toLowerCase().replace('pembaca ', '');
+      
+      // Tambah counter
+      if (counters[catKey] !== undefined) {
+        counters[catKey]++;
+      }
+
+      // Masukkan ke list kategori
       const listEl = document.getElementById(`list-${catKey}`);
       if (listEl) {
         listEl.insertAdjacentHTML('beforeend', `
@@ -516,6 +538,12 @@ function setupRealtimeListeners() {
         if (state.currentTab === 'asesmen') checkAssessmentStatus();
         updateDashboardGreeting();
       }
+    });
+
+    // Update UI Counter di Peta Literasi
+    ['dini', 'awal', 'semenjana', 'madya', 'mahir'].forEach(c => {
+      const countEl = document.getElementById(`count-${c}`);
+      if (countEl) countEl.textContent = counters[c];
     });
 
     // Update dashboard stats
@@ -547,26 +575,33 @@ function setupRealtimeListeners() {
 }
 
 // ─────────────────────────────────────────────
-// 11. INIT
+// 11. INIT & GLOBAL EXPORTS
 // ─────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Muat data lokal dulu (performa: tidak perlu tunggu Firebase)
   state.studentData = loadStudents();
 
-  // Cek sesi login
   const savedUser = loadUser();
   if (savedUser) {
     state.user = savedUser;
     showDashboard();
   }
 
-  // Render statik
   renderBooks();
   generateBulkInputs();
 
-  // Tunggu Firebase siap, lalu pasang listeners
   window.addEventListener('firebase-ready', (e) => {
     if (e.detail?.ok) setupRealtimeListeners();
   });
 });
+
+// Mengekspos fungsi-fungsi agar bisa dipanggil dari inline HTML
+window.populateStudentNames = populateStudentNames;
+window.handleLogin = handleLogin;
+window.handleLogout = handleLogout;
+window.switchTab = switchTab;
+window.submitAssessment = submitAssessment;
+window.submitJournal = submitJournal;
+window.accessDatabase = accessDatabase;
+window.addBulkStudents = addBulkStudents;
+window.countWords = countWords;
