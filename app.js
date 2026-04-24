@@ -924,14 +924,11 @@ let chartHalamanInstance = null;
 // LAPORAN & ANALITIK DATA (CHART.JS DENGAN CACHE)
 // ─────────────────────────────────────────────
 
-// Menggunakan 'var' alih-alih 'let' untuk mencegah crash 
-// jika Anda tidak sengaja menempelkannya dua kali.
-var isLaporanLoaded = false;
-var chartAngkatanInstance = null;
-var chartHalamanInstance = null;
+let isLaporanLoaded = false;
+let chartAngkatanInstance = null;
+let chartHalamanInstance = null;
 
 async function loadLaporan(forceReload = false) {
-  // Sistem Pengunci Cache
   if (!forceReload && isLaporanLoaded) return;
 
   const tbody = document.getElementById("tabel-rekap-bulanan");
@@ -946,7 +943,7 @@ async function loadLaporan(forceReload = false) {
     const ulasan = resUlasan.ulasan || [];
     const jurnal = resJurnal.jurnal || [];
 
-    // --- 1. PIE CHART CHART.JS: Ulasan per Angkatan ---
+    // --- 1. PIE CHART: Ulasan per Angkatan ---
     let count7 = 0, count8 = 0, count9 = 0;
     ulasan.forEach(u => {
       if (!u.kelas) return;
@@ -968,23 +965,18 @@ async function loadLaporan(forceReload = false) {
           datasets: [{
             data: [count7, count8, count9],
             backgroundColor: ['#3b82f6', '#f5a623', '#16a05a'],
-            borderWidth: 2,
-            borderColor: '#ffffff',
-            hoverOffset: 6
+            borderWidth: 2, borderColor: '#ffffff', hoverOffset: 6
           }]
         },
         options: { 
-          responsive: true, 
-          maintainAspectRatio: false, 
-          plugins: { 
-            legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: "'Plus Jakarta Sans', sans-serif", size: 11 } } }
-          },
+          responsive: true, maintainAspectRatio: false, 
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: "'Plus Jakarta Sans', sans-serif", size: 11 } } } },
           cutout: '65%' 
         }
       });
     }
 
-    // --- 2. BAR CHART CHART.JS: Volume Halaman Jurnal ---
+    // --- 2. BAR CHART: Volume Halaman Jurnal ---
     const halamanPerKelas = {};
     jurnal.forEach(j => {
       if (!j.kelas) return;
@@ -1012,13 +1004,11 @@ async function loadLaporan(forceReload = false) {
             label: 'Total Halaman Dibaca',
             data: dataHalaman,
             backgroundColor: '#16a05a',
-            borderRadius: 4,
-            barPercentage: 0.6
+            borderRadius: 4, barPercentage: 0.6
           }]
         },
         options: { 
-          responsive: true, 
-          maintainAspectRatio: false, 
+          responsive: true, maintainAspectRatio: false, 
           plugins: { legend: { display: false } },
           scales: { 
             y: { beginAtZero: true, grid: { color: '#eef2ef' }, ticks: { font: { size: 10 } } },
