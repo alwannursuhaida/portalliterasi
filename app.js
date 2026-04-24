@@ -169,12 +169,9 @@ async function apiCall(action, payload = {}) {
 }
 
 async function apiPost(action, payload = {}) {
-  const body = new URLSearchParams({ action, ...payload });
-  const res = await fetch(CONFIG.API_URL, { 
-    method: "POST", 
-    body,
-    redirect: "follow" 
-  });
+  // Mengalihkan semua lalu lintas simpanan ke fungsi GET
+  return await apiCall(action, payload);
+});
   
   if (!res.ok) throw new Error("Gagal terhubung ke server");
   
