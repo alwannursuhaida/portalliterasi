@@ -920,12 +920,22 @@ async function loadLeaderboard() {
 let chartAngkatanInstance = null;
 let chartHalamanInstance = null;
 
-async function loadLaporan() {
+// ─────────────────────────────────────────────
+// LAPORAN & ANALITIK DATA (CHART.JS DENGAN CACHE)
+// ─────────────────────────────────────────────
+
+let isLaporanLoaded = false;
+let chartAngkatanInstance = null;
+let chartHalamanInstance = null;
+
+async function loadLaporan(forceReload = false) {
+  // Sistem Pengunci Cache: Tidak akan memuat ulang jika tidak ditekan Refresh
+  if (!forceReload && isLaporanLoaded) return;
+
   const tbody = document.getElementById("tabel-rekap-bulanan");
   tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#bbb;padding:20px"><i class="fas fa-circle-notch fa-spin"></i> Menarik data server...</td></tr>';
 
   try {
-    // Tarik dua himpunan data sekaligus secara paralel untuk efisiensi
     const [resUlasan, resJurnal] = await Promise.all([
       apiCall("getAllUlasan"),
       apiCall("getAllJurnal")
@@ -934,7 +944,7 @@ async function loadLaporan() {
     const ulasan = resUlasan.ulasan || [];
     const jurnal = resJurnal.jurnal || [];
 
-    // --- 1. PIE CHART: Ulasan per Angkatan ---
+    // --- 1. PIE CHART CHART.JS: Ulasan per Angkatan ---
     let count7 = 0, count8 = 0, count9 = 0;
     ulasan.forEach(u => {
       if (!u.kelas) return;
@@ -945,7 +955,7 @@ async function loadLaporan() {
     });
 
     const ctxPie = document.getElementById('chart-angkatan').getContext('2d');
-    if (chartAngkatanInstance) chartAngkatanInstance.destroy(); // Hapus canvas lama jika ada
+    if (chartAngkatanInstance) chartAngkatanInstance.destroy(); // Hancurkan kanvas lama sebelum menggambar baru
     
     chartAngkatanInstance = new Chart(ctxPie, {
       type: 'doughnut',
@@ -954,34 +964,34 @@ async function loadLaporan() {
         datasets: [{
           data: [count7, count8, count9],
           backgroundColor: ['#3b82f6', '#f5a623', '#16a05a'],
-          borderWidth: 0,
-          hoverOffset: 4
+          borderWidth: 2,
+          borderColor: '#ffffff',
+          hoverOffset: 6
         }]
       },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+      options: { 
+        responsive: true, 
+        maintainAspectRatio: false, // Wajib agar mematuhi tinggi 220px dari div pembungkus
+        plugins: { 
+          legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: "'Plus Jakarta Sans', sans-serif", size: 11 } } },
+          tooltip: { bodyFont: { family: "'Plus Jakarta Sans', sans-serif" } }
+        },
+        cutout: '65%' // Membuat donat lebih tipis dan elegan
+      }
     });
 
-    document.getElementById("stat-angkatan").innerHTML = `
-      <span>Kls 7: ${count7} ulasan</span> | 
-      <span>Kls 8: ${count8} ulasan</span> | 
-      <span>Kls 9: ${count9} ulasan</span>
-    `;
-
-    // --- 2. BAR CHART: Volume Halaman Jurnal per Kelas ---
+    // --- 2. BAR CHART CHART.JS: Volume Halaman Jurnal ---
     const halamanPerKelas = {};
     jurnal.forEach(j => {
       if (!j.kelas) return;
       const k = String(j.kelas).trim().toUpperCase();
-      // Menghitung selisih halaman yang dibaca secara absolut
       const awal = parseInt(j.halawal) || 0;
       const akhir = parseInt(j.halakhir) || 0;
       let baca = Math.abs(akhir - awal);
-      if (baca === 0 && akhir > 0) baca = 1; // Minimal 1 halaman terbaca
-      
+      if (baca === 0 && akhir > 0) baca = 1; 
       halamanPerKelas[k] = (halamanPerKelas[k] || 0) + baca;
     });
 
-    // Urutkan kelas secara alfabetis
     const labelKelas = Object.keys(halamanPerKelas).sort();
     const dataHalaman = labelKelas.map(k => halamanPerKelas[k]);
 
@@ -996,17 +1006,25 @@ async function loadLaporan() {
           label: 'Total Halaman Dibaca',
           data: dataHalaman,
           backgroundColor: '#16a05a',
-          borderRadius: 6
+          borderRadius: 4,
+          barPercentage: 0.6
         }]
       },
       options: { 
-        responsive: true, maintainAspectRatio: false, 
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true } }
+        responsive: true, 
+        maintainAspectRatio: false, 
+        plugins: { 
+          legend: { display: false },
+          tooltip: { bodyFont: { family: "'Plus Jakarta Sans', sans-serif" } }
+        },
+        scales: { 
+          y: { beginAtZero: true, grid: { color: '#eef2ef' }, ticks: { font: { size: 10 } } },
+          x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+        }
       }
     });
 
-    // --- 3. DATA TAMBAHAN: Buku Terpopuler ---
+    // --- 3. BUKU TERPOPULER (Sama seperti sebelumnya) ---
     const bukuPopuler = {};
     ulasan.forEach(u => {
       if (!u.judulbuku) return;
@@ -1029,7 +1047,6 @@ async function loadLaporan() {
     const isPutri = (k) => /D|E|F/i.test(k);
     const grupBulan = {};
 
-    // Kelompokkan data ulasan berdasarkan YYYY-MM
     ulasan.forEach(u => {
       if (!u.timestamp || !u.kelas || !u.nama) return;
       const d = new Date(u.timestamp);
@@ -1038,18 +1055,14 @@ async function loadLaporan() {
       const namaBulan = d.toLocaleString('id-ID', { month: 'long', year: 'numeric' });
       const idBulan = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 
-      if (!grupBulan[idBulan]) {
-        grupBulan[idBulan] = { label: namaBulan, data: [], tUlasan: 0 };
-      }
+      if (!grupBulan[idBulan]) grupBulan[idBulan] = { label: namaBulan, data: [], tUlasan: 0 };
       grupBulan[idBulan].data.push(u);
       grupBulan[idBulan].tUlasan++;
     });
 
-    // Proses pencarian pemenang per bulan
     const rekapBulananHtml = Object.keys(grupBulan).sort().reverse().map(idBulan => {
       const g = grupBulan[idBulan];
-      const sCounts = {};
-      const cCounts = {};
+      const sCounts = {}, cCounts = {};
 
       g.data.forEach(u => {
         const k = String(u.kelas).trim().toUpperCase().replace(/\s+/g, '');
@@ -1083,7 +1096,10 @@ async function loadLaporan() {
       `;
     }).join("");
 
-    tbody.innerHTML = rekapBulananHtml || '<tr><td colspan="6" style="text-align:center;color:#bbb;padding:20px">Belum ada rekam jejak bulan lalu.</td></tr>';
+    tbody.innerHTML = rekapBulananHtml || '<tr><td colspan="6" style="text-align:center;color:#bbb;padding:20px">Belum ada rekam jejak.</td></tr>';
+
+    isLaporanLoaded = true;
+    if (forceReload) showToast("Data analitik diperbarui.");
 
   } catch (e) {
     console.error(e);
