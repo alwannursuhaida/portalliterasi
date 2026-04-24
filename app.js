@@ -305,6 +305,7 @@ function switchPage(page) {
   }
   if (page === "peta") loadPeta();
   if (page === "koleksi") renderBuku();
+   if (page === "laporan") loadLaporan(); // <-- Pemicu baru
 }
 
 // ─────────────────────────────────────────────
@@ -911,5 +912,181 @@ async function loadLeaderboard() {
     console.error("Gagal memuat leaderboard:", e.message);
     document.getElementById("lb-siswa-putra").textContent = "Gagal memuat";
     document.getElementById("lb-siswa-putri").textContent = "Gagal memuat";
+  }
+}
+// ─────────────────────────────────────────────
+// LAPORAN & ANALITIK DATA (CHARTS & REKAP BULANAN)
+// ─────────────────────────────────────────────
+let chartAngkatanInstance = null;
+let chartHalamanInstance = null;
+
+async function loadLaporan() {
+  const tbody = document.getElementById("tabel-rekap-bulanan");
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#bbb;padding:20px"><i class="fas fa-circle-notch fa-spin"></i> Menarik data server...</td></tr>';
+
+  try {
+    // Tarik dua himpunan data sekaligus secara paralel untuk efisiensi
+    const [resUlasan, resJurnal] = await Promise.all([
+      apiCall("getAllUlasan"),
+      apiCall("getAllJurnal")
+    ]);
+
+    const ulasan = resUlasan.ulasan || [];
+    const jurnal = resJurnal.jurnal || [];
+
+    // --- 1. PIE CHART: Ulasan per Angkatan ---
+    let count7 = 0, count8 = 0, count9 = 0;
+    ulasan.forEach(u => {
+      if (!u.kelas) return;
+      const k = String(u.kelas).trim();
+      if (k.startsWith("7")) count7++;
+      else if (k.startsWith("8")) count8++;
+      else if (k.startsWith("9")) count9++;
+    });
+
+    const ctxPie = document.getElementById('chart-angkatan').getContext('2d');
+    if (chartAngkatanInstance) chartAngkatanInstance.destroy(); // Hapus canvas lama jika ada
+    
+    chartAngkatanInstance = new Chart(ctxPie, {
+      type: 'doughnut',
+      data: {
+        labels: ['Angkatan 7', 'Angkatan 8', 'Angkatan 9'],
+        datasets: [{
+          data: [count7, count8, count9],
+          backgroundColor: ['#3b82f6', '#f5a623', '#16a05a'],
+          borderWidth: 0,
+          hoverOffset: 4
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+    });
+
+    document.getElementById("stat-angkatan").innerHTML = `
+      <span>Kls 7: ${count7} ulasan</span> | 
+      <span>Kls 8: ${count8} ulasan</span> | 
+      <span>Kls 9: ${count9} ulasan</span>
+    `;
+
+    // --- 2. BAR CHART: Volume Halaman Jurnal per Kelas ---
+    const halamanPerKelas = {};
+    jurnal.forEach(j => {
+      if (!j.kelas) return;
+      const k = String(j.kelas).trim().toUpperCase();
+      // Menghitung selisih halaman yang dibaca secara absolut
+      const awal = parseInt(j.halawal) || 0;
+      const akhir = parseInt(j.halakhir) || 0;
+      let baca = Math.abs(akhir - awal);
+      if (baca === 0 && akhir > 0) baca = 1; // Minimal 1 halaman terbaca
+      
+      halamanPerKelas[k] = (halamanPerKelas[k] || 0) + baca;
+    });
+
+    // Urutkan kelas secara alfabetis
+    const labelKelas = Object.keys(halamanPerKelas).sort();
+    const dataHalaman = labelKelas.map(k => halamanPerKelas[k]);
+
+    const ctxBar = document.getElementById('chart-halaman').getContext('2d');
+    if (chartHalamanInstance) chartHalamanInstance.destroy();
+
+    chartHalamanInstance = new Chart(ctxBar, {
+      type: 'bar',
+      data: {
+        labels: labelKelas,
+        datasets: [{
+          label: 'Total Halaman Dibaca',
+          data: dataHalaman,
+          backgroundColor: '#16a05a',
+          borderRadius: 6
+        }]
+      },
+      options: { 
+        responsive: true, maintainAspectRatio: false, 
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+
+    // --- 3. DATA TAMBAHAN: Buku Terpopuler ---
+    const bukuPopuler = {};
+    ulasan.forEach(u => {
+      if (!u.judulbuku) return;
+      const j = String(u.judulbuku).trim().toUpperCase();
+      bukuPopuler[j] = (bukuPopuler[j] || 0) + 1;
+    });
+
+    const listBuku = Object.entries(bukuPopuler).sort((a, b) => b[1] - a[1]);
+    document.getElementById("total-buku-terulas").textContent = listBuku.length;
+    
+    if (listBuku.length > 0) {
+      document.getElementById("top-book-1").textContent = listBuku[0][0];
+      document.getElementById("top-book-1-count").textContent = `${listBuku[0][1]} kali diulas`;
+    } else {
+      document.getElementById("top-book-1").textContent = "Belum ada data";
+    }
+
+    // --- 4. TABEL REKAPITULASI BULANAN ---
+    const isPutra = (k) => /A|B|C/i.test(k);
+    const isPutri = (k) => /D|E|F/i.test(k);
+    const grupBulan = {};
+
+    // Kelompokkan data ulasan berdasarkan YYYY-MM
+    ulasan.forEach(u => {
+      if (!u.timestamp || !u.kelas || !u.nama) return;
+      const d = new Date(u.timestamp);
+      if (isNaN(d.getTime())) return;
+
+      const namaBulan = d.toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+      const idBulan = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+
+      if (!grupBulan[idBulan]) {
+        grupBulan[idBulan] = { label: namaBulan, data: [], tUlasan: 0 };
+      }
+      grupBulan[idBulan].data.push(u);
+      grupBulan[idBulan].tUlasan++;
+    });
+
+    // Proses pencarian pemenang per bulan
+    const rekapBulananHtml = Object.keys(grupBulan).sort().reverse().map(idBulan => {
+      const g = grupBulan[idBulan];
+      const sCounts = {};
+      const cCounts = {};
+
+      g.data.forEach(u => {
+        const k = String(u.kelas).trim().toUpperCase().replace(/\s+/g, '');
+        const n = String(u.nama).trim();
+        sCounts[`${k}|${n}`] = (sCounts[`${k}|${n}`] || 0) + 1;
+        cCounts[k] = (cCounts[k] || 0) + 1;
+      });
+
+      let topSPutra = { n: "-", c: 0 }, topSPutri = { n: "-", c: 0 };
+      for (const [key, c] of Object.entries(sCounts)) {
+        const [kls, nm] = key.split("|");
+        if (isPutra(kls) && c > topSPutra.c) topSPutra = { n: `${nm} (${kls})`, c };
+        if (isPutri(kls) && c > topSPutri.c) topSPutri = { n: `${nm} (${kls})`, c };
+      }
+
+      let topKPutra = { k: "-", c: 0 }, topKPutri = { k: "-", c: 0 };
+      for (const [kls, c] of Object.entries(cCounts)) {
+        if (isPutra(kls) && c > topKPutra.c) topKPutra = { k: kls, c };
+        if (isPutri(kls) && c > topKPutri.c) topKPutri = { k: kls, c };
+      }
+
+      return `
+        <tr>
+          <td><strong>${g.label}</strong></td>
+          <td>${topSPutra.n} <br><span style="font-size:10px;color:#aaa">${topSPutra.c} ulasan</span></td>
+          <td>${topSPutri.n} <br><span style="font-size:10px;color:#aaa">${topSPutri.c} ulasan</span></td>
+          <td>${topKPutra.k} <br><span style="font-size:10px;color:#aaa">${topKPutra.c} ulasan</span></td>
+          <td>${topKPutri.k} <br><span style="font-size:10px;color:#aaa">${topKPutri.c} ulasan</span></td>
+          <td><strong style="color:var(--green-deep)">${g.tUlasan}</strong></td>
+        </tr>
+      `;
+    }).join("");
+
+    tbody.innerHTML = rekapBulananHtml || '<tr><td colspan="6" style="text-align:center;color:#bbb;padding:20px">Belum ada rekam jejak bulan lalu.</td></tr>';
+
+  } catch (e) {
+    console.error(e);
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#ef4444;padding:20px">Gagal memuat rekapitulasi analitik.</td></tr>';
   }
 }
