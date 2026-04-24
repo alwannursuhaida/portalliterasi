@@ -300,6 +300,7 @@ function switchPage(page) {
   if (page === "peta") loadPeta();
   if (page === "jurnal") loadJurnalHistory();
   if (page === "admin") initAdminBulk();
+   if (page === "ulasan") loadUlasanHistory(); // <-- Tambahan baru
 }
 
 // ─────────────────────────────────────────────
@@ -720,5 +721,78 @@ async function loadAdminJurnal() {
   } catch (e) {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#ef4444;padding:20px">Gagal memuat data</td></tr>';
     showToast("Gagal memuat data jurnal.", true);
+  }
+}
+// ─────────────────────────────────────────────
+// ULASAN BUKU
+// ─────────────────────────────────────────────
+async function submitUlasan() {
+  const judul = document.getElementById("ulasan-judul").value.trim();
+  const rating = document.getElementById("ulasan-rating").value;
+  const ulasan = document.getElementById("ulasan-teks").value.trim();
+
+  if (!judul || !ulasan) {
+    showToast("Lengkapi judul dan ulasan terlebih dahulu.", true); 
+    return;
+  }
+
+  const btn = document.getElementById("btn-submit-ulasan");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-spinner"></span> Menyimpan...';
+
+  try {
+    await apiPost("simpanUlasan", {
+      nama: state.user.nama,
+      kelas: state.user.kelas,
+      judulBuku: judul,
+      rating: rating,
+      ulasan: ulasan,
+      timestamp: new Date().toISOString(),
+    });
+
+    showToast("Ulasan berhasil disimpan!");
+    
+    // Reset form
+    document.getElementById("ulasan-judul").value = "";
+    document.getElementById("ulasan-teks").value = "";
+    document.getElementById("ulasan-rating").value = "5";
+    
+    loadUlasanHistory();
+  } catch (e) {
+    showToast("Gagal menyimpan ulasan. " + e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-paper-plane" style="margin-right:8px"></i>Kirim Ulasan';
+  }
+}
+
+async function loadUlasanHistory() {
+  const container = document.getElementById("ulasan-history-list");
+  container.innerHTML = '<p style="color:#bbb;font-size:13px"><i class="fas fa-circle-notch fa-spin"></i> Memuat riwayat...</p>';
+
+  try {
+    const data = await apiCall("getUlasan", {
+      nama: state.user.nama,
+      kelas: state.user.kelas
+    });
+
+    const items = data.ulasan || [];
+    if (items.length === 0) {
+      container.innerHTML = '<p style="color:#bbb;font-size:13px">Belum ada ulasan yang ditulis.</p>';
+      return;
+    }
+
+    container.innerHTML = items.reverse().map(u => `
+      <div class="journal-item">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div class="journal-item-title">📖 ${u.judulBuku}</div>
+          <div style="color:var(--gold);font-size:12px">${"★".repeat(u.rating)}${"☆".repeat(5-u.rating)}</div>
+        </div>
+        <div class="journal-item-meta">${formatTanggal(u.timestamp)}</div>
+        <div class="journal-item-body">"${u.ulasan}"</div>
+      </div>
+    `).join("");
+  } catch (e) {
+    container.innerHTML = '<p style="color:#ef4444;font-size:13px">Gagal memuat riwayat ulasan.</p>';
   }
 }
