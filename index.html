@@ -1313,18 +1313,22 @@
       <p class="page-subtitle">Visualisasi data kuantitatif dan rekapitulasi penghargaan bulanan.</p>
 
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 32px;">
-        <div class="card">
+        
+        <div class="card" style="padding: 24px;">
           <p style="font-size:14px; font-weight:800; color:var(--ink); margin-bottom:16px;">Distribusi Ulasan per Angkatan</p>
-          <canvas id="chart-angkatan" height="250"></canvas>
-          <div id="stat-angkatan" style="margin-top:16px; font-size:12px; color:var(--ink-soft); display:flex; justify-content:space-around; font-weight:600;"></div>
+          <div style="position: relative; height: 220px; width: 100%;">
+            <canvas id="chart-angkatan" style="touch-action: pan-y;"></canvas>
+          </div>
         </div>
 
-        <div class="card">
-          <p style="font-size:14px; font-weight:800; color:var(--ink); margin-bottom:16px;">Ketahanan Membaca (Total Halaman) per Kelas</p>
-          <canvas id="chart-halaman" height="250"></canvas>
+        <div class="card" style="padding: 24px;">
+          <p style="font-size:14px; font-weight:800; color:var(--ink); margin-bottom:16px;">Ketahanan Membaca (Total Halaman)</p>
+          <div style="position: relative; height: 220px; width: 100%;">
+            <canvas id="chart-halaman" style="touch-action: pan-y;"></canvas>
+          </div>
         </div>
+
       </div>
-
       <div class="stats-grid" style="margin-bottom: 32px;">
         <div class="stat-card" style="border-left-color: var(--green-deep);">
           <div style="color:var(--green-deep); font-size:12px; font-weight:800; text-transform:uppercase; margin-bottom:8px">Buku Terpopuler #1</div>
