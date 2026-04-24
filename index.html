@@ -739,15 +739,212 @@
     .modal h3 { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
     .modal p { font-size: 14px; color: var(--ink-soft); margin-bottom: 20px; }
 
-    /* Responsive */
+    /* ===== RESPONSIVE — MOBILE FIRST ===== */
+
+    /* Bottom nav bar for mobile */
+    .mobile-nav-bar {
+      display: none;
+    }
+
     @media (max-width: 768px) {
-      #view-dashboard { flex-direction: column; }
-      .sidebar { width: 100%; min-width: unset; height: auto; position: static; }
-      nav { display: flex; flex-direction: row; overflow-x: auto; padding: 8px; }
-      .nav-item { white-space: nowrap; }
-      .nav-section-label { display: none; }
-      .main { padding: 16px; }
+
+      /* ── Dashboard layout ── */
+      #view-dashboard {
+        flex-direction: column;
+      }
+
+      /* ── Hide desktop sidebar entirely on mobile ── */
+      .sidebar {
+        display: none;
+      }
+
+      /* ── Main content fills screen ── */
+      .main {
+        padding: 16px 14px 90px; /* bottom padding for nav bar */
+        min-height: 100vh;
+        width: 100%;
+        overflow-x: hidden;
+      }
+
+      /* ── Page titles ── */
+      .page-title { font-size: 22px; }
+
+      /* ── Profile card: stack vertically on small screens ── */
+      .profile-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 20px;
+      }
+      .profile-card::after { font-size: 80px; top: -4px; right: 12px; }
+      .profile-card h2 { font-size: 18px; }
+
+      /* ── Stats grid: 2 columns ── */
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+      .stat-card .stat-value { font-size: 24px; }
+
+      /* ── Quick grid: 2x2 ── */
+      .quick-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      /* ── Card padding ── */
+      .card { padding: 18px 14px; }
+
+      /* ── Forms ── */
       .form-row { grid-template-columns: 1fr; }
+      .jurnal-form { max-width: 100%; }
+
+      /* ── Login card ── */
+      .login-card {
+        padding: 32px 20px;
+        margin: 16px;
+        max-width: 100%;
+      }
+
+      /* ── Peta literasi: scroll horizontally ── */
+      .peta-grid {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 10px;
+      }
+
+      /* ── Book grid: single column ── */
+      .book-grid {
+        grid-template-columns: 1fr;
+      }
+
+      /* ── Admin tab bar: scrollable ── */
+      .tab-bar {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 4px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .tab-btn { white-space: nowrap; flex-shrink: 0; }
+
+      /* ── Data tables: horizontal scroll ── */
+      .data-table { font-size: 12px; }
+      .data-table th, .data-table td { padding: 8px 10px; }
+
+      /* ── Quiz options: full width ── */
+      .option-btn { font-size: 13px; padding: 12px 14px; }
+      .question-text { font-size: 16px; }
+
+      /* ── Word counter: stack below label ── */
+      div[style*="justify-content:space-between"] {
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      /* ── Toast: bottom center, full width ── */
+      .toast {
+        bottom: 80px; /* above mobile nav */
+        right: 12px;
+        left: 12px;
+        max-width: calc(100% - 24px);
+      }
+
+      /* ── Modal: full width with margin ── */
+      .modal {
+        margin: 16px;
+        padding: 24px 18px;
+        max-width: calc(100% - 32px);
+      }
+
+      /* ── Laporan charts: full width ── */
+      #page-laporan > div[style*="grid"] {
+        grid-template-columns: 1fr !important;
+      }
+
+      /* ── Admin header: stack ── */
+      .admin-header { flex-direction: column; gap: 12px; }
+
+      /* ── Bulk grid: 2 columns ── */
+      .bulk-grid { grid-template-columns: repeat(2, 1fr); }
+
+      /* ── Leaderboard container: 2 columns ── */
+      #leaderboard-container {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      /* ── Bottom navigation bar ── */
+      .mobile-nav-bar {
+        display: flex;
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        background: #fff;
+        border-top: 1px solid #eef2ef;
+        box-shadow: 0 -4px 20px rgba(13,92,58,0.10);
+        z-index: 500;
+        padding: 0;
+        height: 62px;
+        align-items: stretch;
+      }
+      .mobile-nav-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        border: none;
+        background: none;
+        cursor: pointer;
+        color: #aab;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        text-transform: uppercase;
+        padding: 6px 2px;
+        transition: color 0.15s;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .mobile-nav-item i { font-size: 18px; }
+      .mobile-nav-item.active { color: var(--green-main); }
+      .mobile-nav-item span { line-height: 1; }
+
+      /* ── User card in mobile header ── */
+      .mobile-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
+        background: var(--white);
+        border-radius: var(--radius);
+        padding: 10px 14px;
+        box-shadow: var(--shadow);
+      }
+      .mobile-header .user-info { display: flex; align-items: center; gap: 10px; }
+      .mobile-header .user-avatar {
+        width: 32px; height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--gold), #f97316);
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-weight: 800; font-size: 12px;
+        flex-shrink: 0;
+      }
+      .mobile-header .user-name { font-size: 13px; font-weight: 700; color: var(--ink); }
+      .mobile-header .user-class { font-size: 11px; color: var(--ink-soft); }
+      .mobile-header .btn-logout-sm {
+        background: none; border: 1.5px solid #fecaca;
+        border-radius: 8px; padding: 6px 10px;
+        color: #ef4444; font-family: inherit;
+        font-size: 11px; font-weight: 700; cursor: pointer;
+      }
+    }
+
+    /* Extra small phones */
+    @media (max-width: 380px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      #leaderboard-container { grid-template-columns: 1fr; }
+      .bulk-grid { grid-template-columns: 1fr; }
+      .mobile-nav-item span { display: none; }
+      .mobile-nav-item { gap: 0; }
+      .mobile-nav-item i { font-size: 20px; }
     }
   </style>
 </head>
@@ -828,7 +1025,7 @@
 <!-- ==================== DASHBOARD ==================== -->
 <div id="view-dashboard" class="view">
 
-  <!-- Sidebar -->
+  <!-- Desktop Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-brand">
       <div class="sidebar-brand-icon"><i class="fas fa-book-open"></i></div>
@@ -882,6 +1079,56 @@
       </button>
     </div>
   </aside>
+
+  <!-- Mobile Bottom Navigation Bar -->
+  <nav class="mobile-nav-bar" id="mobile-nav-bar">
+    <button class="mobile-nav-item active" data-page="beranda" onclick="switchPage('beranda')">
+      <i class="fas fa-house"></i><span>Beranda</span>
+    </button>
+    <button class="mobile-nav-item" data-page="asesmen" onclick="switchPage('asesmen')">
+      <i class="fas fa-clipboard-check"></i><span>Asesmen</span>
+    </button>
+    <button class="mobile-nav-item" data-page="jurnal" onclick="switchPage('jurnal')">
+      <i class="fas fa-pen-to-square"></i><span>Jurnal</span>
+    </button>
+    <button class="mobile-nav-item" data-page="ulasan" onclick="switchPage('ulasan')">
+      <i class="fas fa-star-half-stroke"></i><span>Ulasan</span>
+    </button>
+    <button class="mobile-nav-item" data-page="beranda" onclick="showMobileMenu()">
+      <i class="fas fa-grid-2"></i><span>Lainnya</span>
+    </button>
+  </nav>
+
+  <!-- Mobile "More" Drawer -->
+  <div id="mobile-menu-drawer" style="display:none; position:fixed; inset:0; z-index:600; background:rgba(0,0,0,0.45);" onclick="hideMobileMenu()">
+    <div onclick="event.stopPropagation()" style="position:absolute; bottom:62px; left:0; right:0; background:#fff; border-radius:20px 20px 0 0; padding:20px 16px 16px; box-shadow:0 -8px 40px rgba(0,0,0,0.15);">
+      <p style="font-size:11px; font-weight:800; color:#bbb; letter-spacing:1.2px; text-transform:uppercase; margin-bottom:12px;">Menu Lainnya</p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <button class="quick-card" onclick="hideMobileMenu();switchPage('peta')" style="padding:14px 10px;">
+          <i class="fas fa-map-location-dot"></i><span>Peta Literasi</span>
+        </button>
+        <button class="quick-card" onclick="hideMobileMenu();switchPage('koleksi')" style="padding:14px 10px;">
+          <i class="fas fa-book-bookmark"></i><span>Koleksi Buku</span>
+        </button>
+        <button class="quick-card" onclick="hideMobileMenu();switchPage('laporan')" style="padding:14px 10px;">
+          <i class="fas fa-chart-pie"></i><span>Laporan</span>
+        </button>
+        <button id="mobile-admin-btn" class="quick-card" onclick="hideMobileMenu();switchPage('admin')" style="padding:14px 10px; display:none;">
+          <i class="fas fa-database"></i><span>Panel Admin</span>
+        </button>
+      </div>
+      <div style="margin-top:14px; padding-top:14px; border-top:1px solid #eef2ef; display:flex; align-items:center; gap:10px;">
+        <div class="user-avatar" id="mobile-drawer-avatar" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#f97316);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px;flex-shrink:0;">?</div>
+        <div style="flex:1;">
+          <div style="font-size:13px; font-weight:700; color:var(--ink);" id="mobile-drawer-name">Siswa</div>
+          <div style="font-size:11px; color:var(--ink-soft);" id="mobile-drawer-class">Kelas —</div>
+        </div>
+        <button onclick="hideMobileMenu();handleLogout()" style="background:none;border:1.5px solid #fecaca;border-radius:8px;padding:7px 12px;color:#ef4444;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">
+          <i class="fas fa-right-from-bracket"></i> Keluar
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Main Content -->
   <main class="main">
@@ -1391,6 +1638,59 @@
     </section>
   </main>
 </div>
+
+<!-- Mobile nav helpers -->
+<script>
+  function showMobileMenu() {
+    document.getElementById('mobile-menu-drawer').style.display = 'block';
+  }
+  function hideMobileMenu() {
+    document.getElementById('mobile-menu-drawer').style.display = 'none';
+  }
+
+  // Patch switchPage to also update mobile nav bar active state
+  document.addEventListener('DOMContentLoaded', function() {
+    const origSwitchPage = window.switchPage;
+    if (typeof origSwitchPage === 'function') {
+      window.switchPage = function(page) {
+        origSwitchPage(page);
+        syncMobileNav(page);
+      };
+    }
+
+    // Sync after login: update mobile drawer user info
+    const origHandleLogin = window.handleLogin;
+    if (typeof origHandleLogin === 'function') {
+      window.handleLogin = function() {
+        origHandleLogin();
+        setTimeout(syncMobileUserInfo, 300);
+      };
+    }
+  });
+
+  function syncMobileNav(page) {
+    const mainPages = ['beranda','asesmen','jurnal','ulasan'];
+    document.querySelectorAll('.mobile-nav-item[data-page]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.page === page && mainPages.includes(page));
+    });
+  }
+
+  function syncMobileUserInfo() {
+    const name = document.getElementById('sidebar-name')?.textContent || '';
+    const kelas = document.getElementById('sidebar-class')?.textContent || '';
+    const avatar = document.getElementById('sidebar-avatar')?.textContent || '?';
+    const el = (id, v) => { const e = document.getElementById(id); if(e) e.textContent = v; };
+    el('mobile-drawer-name', name);
+    el('mobile-drawer-class', kelas);
+    el('mobile-drawer-avatar', avatar);
+    // Show admin button if admin panel visible
+    const adminWrap = document.getElementById('nav-admin-wrap');
+    const mobileAdminBtn = document.getElementById('mobile-admin-btn');
+    if (adminWrap && mobileAdminBtn) {
+      mobileAdminBtn.style.display = adminWrap.style.display === 'none' ? 'none' : 'flex';
+    }
+  }
+</script>
 
 <!-- App Script -->
 <script src="app.js"></script>
