@@ -217,6 +217,10 @@ function switchPage(page) {
   if (page === "admin") { loadAdminAsesmen(); loadAdminJurnal(); }
   if (page === "peta") loadPeta();
   if (page === "koleksi") renderBuku();
+   if (page === "jurnal") {
+    loadJurnalHistory();
+    checkWidgetJumat(); // <-- Pemicu Widget
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -417,7 +421,10 @@ async function submitJurnal() {
     });
     showToast("Jurnal berhasil disimpan!");
     ["jurnal-judul","jurnal-penulis","jurnal-hal-awal","jurnal-hal-akhir","jurnal-ringkasan"].forEach(id => document.getElementById(id).value = "");
-    countWords(); loadJurnalHistory(); loadBerandaStats();
+   countWords(); 
+    loadJurnalHistory(); 
+    loadBerandaStats();
+    checkWidgetJumat(); // <-- Paksa widget me-refresh data
   } catch (e) { showToast("Gagal menyimpan jurnal. Coba lagi.", true);
   } finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane" style="margin-right:8px"></i>Kirim Jurnal'; }
 }
@@ -727,5 +734,108 @@ async function loadLaporan(forceReload = false) {
     if (forceReload) showToast("Data analitik diperbarui.");
   } catch (e) {
     if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#ef4444;padding:20px">Gagal memuat rekapitulasi.</td></tr>';
+  }
+}
+// ─────────────────────────────────────────────
+// WIDGET KHUSUS JUMAT (COMPLIANCE TRACKER)
+// ─────────────────────────────────────────────
+async function checkWidgetJumat() {
+  const widget = document.getElementById("widget-jumat");
+  const container = document.getElementById("jumat-list-container");
+  if (!widget || !container) return;
+
+  const today = new Date();
+  
+  // LOGIKA WAKTU: getDay() mengembalikan angka 0 (Minggu) s.d 6 (Sabtu). Jumat adalah 5.
+  // Jika hari ini bukan Jumat, sembunyikan widget dan matikan fungsi.
+  if (today.getDay() !== 5) {
+    widget.style.display = "none";
+    return;
+  }
+  
+  // Jika ini hari Jumat, pampang widgetnya
+  widget.style.display = "block";
+  container.innerHTML = '<p style="color:#bbb;font-size:13px"><i class="fas fa-circle-notch fa-spin"></i> Memindai kepatuhan siswa...</p>';
+
+  try {
+    // Tarik master data Siswa dan seluruh Jurnal secara paralel
+    const [resSiswa, resJurnal] = await Promise.all([
+      apiCall("getAllSiswa"),
+      apiCall("getAllJurnal")
+    ]);
+
+    const semuaSiswa = resSiswa.siswa || [];
+    const semuaJurnal = resJurnal.jurnal || [];
+
+    // Filter 1: Kumpulkan data siswa yang SUDAH mengisi pada TANGGAL HARI INI
+    const sudahJurnalSet = new Set();
+    const todayStr = today.toDateString(); // Format: "Fri Apr 24 2026" (Reset otomatis besok)
+
+    semuaJurnal.forEach(j => {
+      if (!j.timestamp || !j.kelas || !j.nama) return;
+      const d = new Date(j.timestamp);
+      
+      // Jika jurnal di-submit pada hari Jumat ini
+      if (d.toDateString() === todayStr) {
+        const id = String(j.kelas).trim().toUpperCase().replace(/\s+/g, '') + "|" + String(j.nama).trim().toLowerCase();
+        sudahJurnalSet.add(id);
+      }
+    });
+
+    // Filter 2: Kelompokkan siswa yang BELUM ada di Set
+    const belumPerKelas = {};
+    
+    semuaSiswa.forEach(s => {
+      if (!s.kelas || !s.nama) return;
+      const kls = String(s.kelas).trim().toUpperCase().replace(/\s+/g, '');
+      const nm = String(s.nama).trim();
+      const id = kls + "|" + nm.toLowerCase();
+
+      // Jika ID tidak ditemukan di daftar yang sudah submit, berarti dia belum
+      if (!sudahJurnalSet.has(id)) {
+        if (!belumPerKelas[kls]) belumPerKelas[kls] = [];
+        belumPerKelas[kls].push(nm);
+      }
+    });
+
+    // Render HTML
+    const kelasSorted = Object.keys(belumPerKelas).sort();
+    
+    // Jika semua sudah mengisi
+    if (kelasSorted.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center; padding: 24px 0;">
+          <i class="fas fa-shield-check" style="font-size:36px; color:var(--green-main); margin-bottom:12px;"></i>
+          <p style="font-size:14px; font-weight:800; color:var(--green-deep);">Kepatuhan 100%</p>
+          <p style="font-size:12px; color:var(--ink-soft); margin-top:4px;">Seluruh siswa telah menyelesaikan jurnal hari ini. Luar biasa!</p>
+        </div>
+      `;
+      return;
+    }
+
+    // Buat kartu merah untuk setiap kelas yang siswanya membolos jurnal
+    container.innerHTML = kelasSorted.map(kls => {
+      const listNama = belumPerKelas[kls].sort();
+      return `
+        <div style="margin-bottom: 12px; background: #fff; border: 1px solid #fecaca; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(220,38,38,0.05);">
+          <div style="background: #fef2f2; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #fee2e2;">
+            <span style="font-size: 13px; font-weight: 800; color: #991b1b;">Kelas ${kls}</span>
+            <span style="background: #ef4444; color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 800;">${listNama.length} siswa</span>
+          </div>
+          <div style="padding: 8px 14px;">
+            ${listNama.map(n => `
+              <div style="font-size:12px; color:var(--ink); padding:5px 0; border-bottom:1px dashed #f1f5f9; display:flex; align-items:center; gap:8px;">
+                <i class="fas fa-xmark" style="color:#ef4444; flex-shrink:0;"></i> 
+                <span style="font-weight:500;">${n}</span>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    }).join("");
+
+  } catch (e) {
+    console.error("Kesalahan Widget Jumat:", e);
+    container.innerHTML = '<p style="color:#ef4444;font-size:13px">Gagal memuat daftar merah.</p>';
   }
 }
