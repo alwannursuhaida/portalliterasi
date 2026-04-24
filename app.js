@@ -1,607 +1,710 @@
-/**
- * app.js — Portal Literasi SMP Albanna
- *
- * Struktur:
- * 1. KONSTANTA & DATA STATIS
- * 2. STATE
- * 3. STORAGE HELPERS
- * 4. AUTH / LOGIN / LOGOUT
- * 5. NAVIGASI (switchTab)
- * 6. ASESMEN
- * 7. JURNAL
- * 8. DATABASE ADMIN
- * 9. RENDER HELPERS (buku, sidebar)
- * 10. FIREBASE REALTIME LISTENERS
- * 11. INIT & GLOBAL EXPORTS
- */
+/* ============================================================
+   SiLit — Sistem Literasi SMP Albanna
+   app.js — Logika Aplikasi Utama
+   Versi: 1.0 | Koneksi: Google Apps Script (REST API)
+   ============================================================ */
 
 // ─────────────────────────────────────────────
-// 1. KONSTANTA & DATA STATIS
+// KONFIGURASI — Ganti URL setelah deploy Apps Script
 // ─────────────────────────────────────────────
-
-const BOOKS = [
-  { id: 1, title: "SIBI",         author: "Kemendikdasmen", category: "Portal Buku",   color: "bg-blue-100",  link: "https://buku.kemendikdasmen.go.id/" },
-  { id: 2, title: "Badan Bahasa", author: "Kemendikdasmen", category: "Portal Bahasa", color: "bg-green-100", link: "https://badanbahasa.kemendikdasmen.go.id/" },
-];
-
-const ASSESSMENT_DATA = [
-  {
-    textTitle: "Kerupuk, Pelengkap Makanan yang Mendunia",
-    textContent: "Kerupuk merupakan makanan yang sangat populer di Indonesia. Konon, kerupuk sudah ada di Nusantara sejak abad ke-9 dan ke-10, terbukti dari prasasti kuno. Kerupuk kini bukan hanya makanan rakyat, tetapi juga komoditas ekspor yang mendunia, dikirim hingga puluhan ribu kilogram ke luar negeri.",
-    questions: [
-      { id: 1, q: "Berdasarkan informasi umum, manakah fakta yang paling tepat mengenai keberadaan kerupuk?", options: ["Kerupuk sudah ada di Nusantara sejak abad ke-9 dan ke-10.", "Kerupuk baru diperkenalkan oleh pedagang Eropa abad ke-18.", "Kerupuk hanya boleh dikonsumsi raja.", "Kerupuk ditemukan masa kemerdekaan."], correct: 0 },
-      { id: 2, q: "Apa fungsi utama gambar bermacam-macam kerupuk dalam infografik?", options: ["Memberikan gambaran visual ragam jenis kerupuk.", "Memenuhi ruang kosong.", "Panduan resep masak.", "Membuktikan kerupuk mahal."], correct: 0 },
-    ],
-  },
-  {
-    textTitle: "Air Putih atau Air Mineral?",
-    textContent: "Walaupun wujud, warna, dan rasanya cenderung mirip, air mineral dan air putih tidaklah sama. Menurut segi sumber, proses pengolahan, maupun kandungan, keduanya memiliki perbedaan yang jelas.",
-    questions: [
-      { id: 3, q: "Manakah pernyataan yang paling tepat mengenai perbedaan keduanya?", options: ["Keduanya berbeda dari segi sumber, proses pengolahan, dan kandungan.", "Istilah yang sama persis.", "Bedanya hanya di kemasan.", "Air mineral tidak boleh dimasak."], correct: 0 },
-    ],
-  },
-  {
-    textTitle: "Antre, Dong!",
-    textContent: "Tia dan Devi sedang mengantre di kasir. Tiba-tiba seorang pemuda menyerobot. Ibu di belakangnya menegur, tapi pemuda itu beralasan buru-buru. Tia ikut menegur dengan sopan namun tegas. Akhirnya Pak Satpam datang menyelesaikan keributan.",
-    questions: [
-      { id: 4, q: "Siapakah tokoh yang akhirnya turun tangan menyelesaikan keributan?", options: ["Pak Satpam", "Kasir", "Ibu pengantre", "Tia"], correct: 0 },
-      { id: 5, q: "Bagaimana perbedaan watak antara Tia dan pemuda tersebut?", options: ["Tia berani mengingatkan aturan, pemuda itu egois.", "Tia pemalu, pemuda disiplin.", "Tia acuh, pemuda darurat.", "Tia pemarah, pemuda sabar."], correct: 0 },
-    ],
-  },
-  {
-    textTitle: "Aduh, Panas!",
-    textContent: "Ani terkena setrika panas. Kak Dita segera mengambil pelepah lidah buaya dan mengoleskan getahnya. Kak Dita menjelaskan bahwa getah lidah buaya mengandung glukomanan yang mendorong regenerasi sel dan kolagen.",
-    questions: [
-      { id: 6, q: "Mengapa Kak Dita menggunakan getah lidah buaya?", options: ["Mengandung senyawa penyembuh luka dan sensasi dingin.", "Satu-satunya tanaman di kebun.", "Tidak punya kotak P3K.", "Ani meminta herbal."], correct: 0 },
-      { id: 7, q: "Apa kandungan lidah buaya yang merangsang pertumbuhan kulit baru?", options: ["Senyawa glukomanan dan kolagen", "Vitamin C dan Zat Besi", "Kalsium dan Protein", "Air dan Mineral"], correct: 0 },
-    ],
-  },
-  {
-    textTitle: "Melihat Orang Kejang? Jangan Panik",
-    textContent: "Saat menolong orang kejang, hal terpenting adalah jangan panik. Kepanikan bisa membuat kita melakukan tindakan gegabah yang membahayakan korban.",
-    questions: [
-      { id: 8, q: "Mengapa kepanikan harus dihindari saat menolong?", options: ["Agar dapat berpikir jernih dan tidak membahayakan korban.", "Karena panik itu menular.", "Supaya tidak jadi tontonan.", "Karena akan didenda."], correct: 0 },
-    ],
-  },
-  {
-    textTitle: "Salah Kira",
-    textContent: "Rania bangun pukul 6 pagi dan panik karena mengira terlambat sekolah. Ia buru-buru bersiap, melupakan buku gambar. Sampai di sekolah, gerbang tutup. Pak Gino memberitahu ini hari Minggu.",
-    questions: [
-      { id: 9,  q: "Peristiwa apa yang membuat Rania terkejut di sekolah?", options: ["Gerbang tutup karena hari Minggu.", "Lupa buku gambar.", "Terlambat.", "Tas tertinggal."], correct: 0 },
-      { id: 10, q: "Mengapa Rania terburu-buru bangun?", options: ["Melihat jam pukul 6 dan mengira terlambat.", "Disuruh Ibu.", "Jam mati.", "Dijemput teman."], correct: 0 },
-      { id: 11, q: "Barang apa yang dilihat Rania tapi TIDAK dibawa?", options: ["Buku gambar", "Kotak pensil", "Buku pelajaran", "Seragam"], correct: 0 },
-      { id: 12, q: "Apa pelajaran dari cerita ini?", options: ["Pentingnya memeriksa jadwal/hari sebelum terburu-buru.", "Harus bangun jam 5.", "Jangan dengar orang tua.", "Sekolah harus buka tiap hari."], correct: 0 },
-    ],
-  },
-];
-
-// Hitung total soal sekali saja
-const TOTAL_QUESTIONS = ASSESSMENT_DATA.reduce((sum, s) => sum + s.questions.length, 0);
-
-// Kategori berdasarkan skor
-const SCORE_CATEGORIES = [
-  { min: 11, label: "Pembaca Mahir" },
-  { min: 9,  label: "Pembaca Madya" },
-  { min: 6,  label: "Pembaca Semenjana" },
-  { min: 4,  label: "Pembaca Awal" },
-  { min: 0,  label: "Pembaca Dini" },
-];
-
-// ─────────────────────────────────────────────
-// 2. STATE
-// ─────────────────────────────────────────────
-
-const state = {
-  user:                 null,   // { name, kelas }
-  currentTab:           'beranda',
-  studentData:          {},     // { "7A": ["Nama1", "Nama2", ...], ... }
-  userAssessmentResult: null,   // { score, total, category, ... }
+const CONFIG = {
+  API_URL: "https://script.google.com/macros/s/AKfycbwfstKF05KYxF54c1oGRSu3Q_OLjY0GD_hP5wicJKmcY9uG1rkVV9HIw7gcqeEkiQGg/exec",
+  ADMIN_PASSWORD: "albanna2025",   // Ganti sesuai kebutuhan
+  MIN_KATA_JURNAL: 50,
+  TOTAL_SOAL: 12,
 };
 
 // ─────────────────────────────────────────────
-// 3. STORAGE HELPERS
+// BANK SOAL ASESMEN LITERASI
+// Kategori berdasarkan skor:
+//   0–2   → Pembaca Dini
+//   3–5   → Pembaca Awal
+//   6–8   → Pembaca Semenjana
+//   9–10  → Pembaca Madya
+//   11–12 → Pembaca Mahir
 // ─────────────────────────────────────────────
+const BANK_SOAL = [
+  {
+    soal: "Ketika membaca sebuah paragraf, apa yang pertama kali kamu perhatikan untuk memahami isinya?",
+    opsi: ["Jumlah kalimat dalam paragraf", "Kata kunci dan ide pokok", "Panjang atau pendeknya paragraf", "Jenis huruf yang digunakan"],
+    jawaban: 1
+  },
+  {
+    soal: "Apa yang dimaksud dengan 'inferensi' dalam membaca?",
+    opsi: ["Membaca ulang teks berkali-kali", "Menyimpulkan makna yang tidak tertulis langsung", "Mencatat semua kata sulit", "Membaca dengan suara keras"],
+    jawaban: 1
+  },
+  {
+    soal: "Seorang penulis menggunakan kata 'namun' di awal kalimat. Fungsi kata tersebut adalah...",
+    opsi: ["Menambahkan informasi baru", "Menunjukkan pertentangan atau kontras", "Menyimpulkan isi paragraf", "Memberikan contoh"],
+    jawaban: 1
+  },
+  {
+    soal: "Kamu membaca berita tentang banjir. Manakah pertanyaan kritis yang paling tepat untuk diajukan?",
+    opsi: ["Berapa banyak foto yang ada di artikel?", "Apakah penyebab yang disebutkan didukung oleh data?", "Siapa yang menulis artikel ini?", "Kapan artikel ini diterbitkan?"],
+    jawaban: 1
+  },
+  {
+    soal: "Teks eksposisi bertujuan untuk...",
+    opsi: ["Menghibur pembaca dengan cerita menarik", "Meyakinkan pembaca untuk melakukan sesuatu", "Menjelaskan suatu topik secara faktual dan objektif", "Mengungkapkan perasaan penulis"],
+    jawaban: 2
+  },
+  {
+    soal: "Apa perbedaan utama antara fakta dan opini dalam sebuah teks?",
+    opsi: ["Fakta selalu lebih panjang dari opini", "Fakta dapat diverifikasi, opini bersifat subjektif", "Opini selalu salah, fakta selalu benar", "Tidak ada perbedaan antara keduanya"],
+    jawaban: 1
+  },
+  {
+    soal: "Ketika menemukan kata yang tidak kamu ketahui artinya, strategi terbaik adalah...",
+    opsi: ["Langsung melewati kata tersebut", "Menutup buku dan berhenti membaca", "Menggunakan konteks kalimat untuk memperkirakan maknanya", "Mengganti kata tersebut dengan kata lain"],
+    jawaban: 2
+  },
+  {
+    soal: "Sebuah paragraf yang baik biasanya dimulai dengan...",
+    opsi: ["Kalimat penjelas yang panjang", "Contoh konkret", "Kalimat topik yang menyatakan ide utama", "Kutipan dari tokoh terkenal"],
+    jawaban: 2
+  },
+  {
+    soal: "Teks argumentasi yang kuat harus memiliki...",
+    opsi: ["Banyak kata-kata emosional", "Klaim yang didukung oleh bukti dan logika", "Kalimat yang sangat panjang", "Hanya pendapat penulis tanpa data"],
+    jawaban: 1
+  },
+  {
+    soal: "Membaca memindai (scanning) paling tepat digunakan untuk...",
+    opsi: ["Memahami seluruh isi novel", "Menemukan informasi spesifik dengan cepat", "Menikmati alur cerita fiksi", "Menganalisis gaya bahasa penulis"],
+    jawaban: 1
+  },
+  {
+    soal: "Apa yang dimaksud dengan 'kohesi' dalam sebuah teks?",
+    opsi: ["Keindahan tampilan visual teks", "Keterkaitan antar kalimat dan paragraf secara gramatikal", "Jumlah halaman sebuah buku", "Kemampuan penulis menghibur pembaca"],
+    jawaban: 1
+  },
+  {
+    soal: "Setelah membaca sebuah artikel, langkah refleksi yang paling baik adalah...",
+    opsi: ["Langsung membaca artikel lain", "Merangkum isi, mengevaluasi argumen, dan menghubungkan dengan pengetahuan yang sudah ada", "Mengingat semua kalimat yang ada", "Menceritakan ulang artikel kata per kata"],
+    jawaban: 1
+  },
+];
 
-function userStorageKey(prefix) {
-  if (!state.user) return prefix;
-  const { name, kelas } = state.user;
-  return `${prefix}__${kelas}__${encodeURIComponent(name)}`;
+const KATEGORI_INFO = {
+  "Pembaca Dini":      { min: 0,  max: 2,  desc: "Kamu baru memulai perjalanan membaca. Terus berlatih dan jangan menyerah!" },
+  "Pembaca Awal":      { min: 3,  max: 5,  desc: "Kamu sudah mulai memahami teks sederhana. Tingkatkan frekuensi membacamu!" },
+  "Pembaca Semenjana": { min: 6,  max: 8,  desc: "Kemampuan membacamu cukup baik. Tantang dirimu dengan teks yang lebih kompleks." },
+  "Pembaca Madya":     { min: 9,  max: 10, desc: "Kamu sudah mampu membaca secara kritis. Pertahankan dan terus tingkatkan!" },
+  "Pembaca Mahir":     { min: 11, max: 12, desc: "Luar biasa! Kamu adalah pembaca mahir yang mampu menganalisis teks secara mendalam." },
+};
+
+const KOLEKSI_BUKU = [
+  { emoji: "📚", judul: "iPusnas", desc: "Perpustakaan digital nasional gratis. Ribuan buku fiksi dan nonfiksi tersedia.", url: "https://ipusnas.id" },
+  { emoji: "🌐", judul: "Buku Sekolah Elektronik (BSE)", desc: "Buku pelajaran resmi Kemendikbud bisa diakses dan diunduh gratis.", url: "https://buku.kemdikbud.go.id" },
+  { emoji: "📖", judul: "Lumen Learning", desc: "Materi pelajaran berbahasa Inggris dengan penjelasan interaktif.", url: "https://lumenlearning.com" },
+  { emoji: "🔬", judul: "Khan Academy", desc: "Belajar sains, matematika, dan humaniora secara gratis dan terstruktur.", url: "https://id.khanacademy.org" },
+  { emoji: "🗞️", judul: "Kompas.id — Junior", desc: "Berita dan artikel pilihan yang sesuai untuk pelajar.", url: "https://www.kompas.id" },
+  { emoji: "📰", judul: "Cerpen Indonesia", desc: "Kumpulan cerpen dan karya sastra Indonesia pilihan untuk dibaca.", url: "https://cerpen-sastra.com" },
+];
+
+// ─────────────────────────────────────────────
+// STATE APLIKASI
+// ─────────────────────────────────────────────
+let state = {
+  user: null,        // { nama, kelas }
+  isAdmin: false,
+  quiz: {
+    soalAcak: [],
+    currentIdx: 0,
+    jawaban: [],     // index jawaban per soal
+    selesai: false,
+  },
+  peta: [],          // data asesmen dari server
+};
+
+// ─────────────────────────────────────────────
+// UTILITAS
+// ─────────────────────────────────────────────
+function showToast(msg, isError = false) {
+  const existing = document.querySelector(".toast");
+  if (existing) existing.remove();
+
+  const t = document.createElement("div");
+  t.className = "toast" + (isError ? " error" : "");
+  t.innerHTML = `<i class="fas fa-${isError ? "circle-exclamation" : "circle-check"}"></i> ${msg}`;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
 }
 
-function saveUser(user)       { localStorage.setItem('albannaUser',     JSON.stringify(user)); }
-function loadUser()           { return JSON.parse(localStorage.getItem('albannaUser') || 'null'); }
-function clearUser()          { localStorage.removeItem('albannaUser'); }
+function formatTanggal(isoStr) {
+  if (!isoStr) return "—";
+  const d = new Date(isoStr);
+  return d.toLocaleString("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
 
-function saveStudents(data)   { localStorage.setItem('albannaStudents', JSON.stringify(data)); }
-function loadStudents()       { return JSON.parse(localStorage.getItem('albannaStudents') || '{}'); }
+function acakArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
-function saveAssessment(r)    { localStorage.setItem(userStorageKey('asesmen'), JSON.stringify(r)); }
-function loadAssessment()     { return JSON.parse(localStorage.getItem(userStorageKey('asesmen')) || 'null'); }
+function getKategori(skor) {
+  for (const [nama, info] of Object.entries(KATEGORI_INFO)) {
+    if (skor >= info.min && skor <= info.max) return nama;
+  }
+  return "Pembaca Dini";
+}
+
+async function apiCall(action, payload = {}) {
+  const url = new URL(CONFIG.API_URL);
+  url.searchParams.set("action", action);
+  for (const [k, v] of Object.entries(payload)) url.searchParams.set(k, v);
+
+  const res = await fetch(url.toString());
+  if (!res.ok) throw new Error("Gagal terhubung ke server");
+  return res.json();
+}
+
+async function apiPost(action, payload = {}) {
+  const body = new URLSearchParams({ action, ...payload });
+  const res = await fetch(CONFIG.API_URL, { method: "POST", body });
+  if (!res.ok) throw new Error("Gagal menyimpan data");
+  return res.json();
+}
 
 // ─────────────────────────────────────────────
-// 4. AUTH / LOGIN / LOGOUT
+// LOGIN & AUTH
 // ─────────────────────────────────────────────
+async function onKelasChange() {
+  const kelas = document.getElementById("input-class").value;
+  const nameSelect = document.getElementById("input-name");
+
+  nameSelect.disabled = true;
+  nameSelect.innerHTML = '<option value="" disabled selected>Memuat...</option>';
+
+  try {
+    const data = await apiCall("getSiswa", { kelas });
+    nameSelect.innerHTML = '<option value="" disabled selected>— Pilih Nama —</option>';
+
+    if (!data.siswa || data.siswa.length === 0) {
+      nameSelect.innerHTML = '<option value="" disabled selected>Belum ada siswa di kelas ini</option>';
+      return;
+    }
+
+    data.siswa.forEach(nama => {
+      const opt = document.createElement("option");
+      opt.value = nama;
+      opt.textContent = nama;
+      nameSelect.appendChild(opt);
+    });
+    nameSelect.disabled = false;
+  } catch (e) {
+    nameSelect.innerHTML = '<option value="" disabled selected>Gagal memuat data</option>';
+    showToast("Tidak dapat terhubung ke database.", true);
+  }
+}
 
 function handleLogin() {
-  const kelas = document.getElementById('input-class').value;
-  const name  = document.getElementById('input-name').value;
-  if (!kelas || !name) return;
+  const kelas = document.getElementById("input-class").value;
+  const nama  = document.getElementById("input-name").value;
 
-  state.user = { name, kelas };
-  saveUser(state.user);
-  showDashboard();
+  if (!kelas || !nama) {
+    showToast("Pilih kelas dan nama siswa terlebih dahulu.", true);
+    return;
+  }
+
+  state.user = { nama, kelas };
+  state.isAdmin = false;
+  enterDashboard();
+}
+
+function openAdminModal() {
+  document.getElementById("admin-pass").value = "";
+  document.getElementById("admin-modal").style.display = "flex";
+  setTimeout(() => document.getElementById("admin-pass").focus(), 100);
+}
+
+function checkAdminPass() {
+  const pass = document.getElementById("admin-pass").value;
+  if (pass === CONFIG.ADMIN_PASSWORD) {
+    document.getElementById("admin-modal").style.display = "none";
+    state.user = { nama: "Administrator", kelas: "Admin" };
+    state.isAdmin = true;
+    enterDashboard();
+    switchPage("admin");
+  } else {
+    showToast("Kata sandi salah.", true);
+    document.getElementById("admin-pass").value = "";
+  }
 }
 
 function handleLogout() {
-  if (!confirm('Keluar dari Portal Literasi?')) return;
-  clearUser();
-  state.user                 = null;
-  state.userAssessmentResult = null;
-
-  document.getElementById('dashboard-view').classList.add('hidden');
-  document.getElementById('dashboard-view').classList.remove('flex');
-  document.getElementById('login-view').classList.remove('hidden');
-
-  // Reset form login
-  document.getElementById('input-class').value = '';
-  const nameSelect = document.getElementById('input-name');
-  nameSelect.innerHTML = '<option value="" disabled selected>-- Pilih Kelas Terlebih Dahulu --</option>';
-  nameSelect.disabled  = true;
+  state.user = null;
+  state.isAdmin = false;
+  document.getElementById("view-dashboard").classList.remove("active");
+  document.getElementById("view-dashboard").style.display = "";
+  document.getElementById("view-login").classList.add("active");
+  document.getElementById("view-login").style.display = "flex";
+  resetAsesmen();
 }
 
-function showDashboard() {
-  document.getElementById('login-view').classList.add('hidden');
-  document.getElementById('dashboard-view').classList.remove('hidden');
-  document.getElementById('dashboard-view').classList.add('flex');
+function enterDashboard() {
+  document.getElementById("view-login").classList.remove("active");
+  document.getElementById("view-login").style.display = "none";
+  document.getElementById("view-dashboard").classList.add("active");
+  document.getElementById("view-dashboard").style.display = "flex";
 
-  const firstName = state.user.name.split(' ')[0];
-  document.getElementById('display-name').textContent  = state.user.name;
-  document.getElementById('display-class').textContent = state.user.kelas;
-  document.getElementById('welcome-name').textContent  = firstName;
-  document.getElementById('user-avatar').textContent   = state.user.name.substring(0, 2).toUpperCase();
+  // Update UI user
+  const inisial = state.user.nama.charAt(0).toUpperCase();
+  document.getElementById("sidebar-avatar").textContent = inisial;
+  document.getElementById("sidebar-name").textContent = state.user.nama;
+  document.getElementById("sidebar-class").textContent = "Kelas " + state.user.kelas;
+  document.getElementById("profile-avatar").textContent = inisial;
+  document.getElementById("profile-name").textContent = state.user.nama;
+  document.getElementById("profile-class").textContent = "Kelas " + state.user.kelas;
+  document.getElementById("profile-card-wrap").setAttribute("data-initial", inisial);
 
-  // Muat hasil asesmen dari localStorage jika ada
-  state.userAssessmentResult = loadAssessment();
-  updateDashboardGreeting();
-  switchTab('beranda');
-}
+  // Admin nav
+  document.getElementById("nav-admin-wrap").style.display = state.isAdmin ? "block" : "none";
 
-function populateStudentNames() {
-  const kelas      = document.getElementById('input-class').value;
-  const nameSelect = document.getElementById('input-name');
-
-  nameSelect.innerHTML = '<option value="" disabled selected>-- Pilih Nama --</option>';
-
-  const students = state.studentData[kelas] || [];
-
-  if (students.length === 0) {
-    nameSelect.disabled = true;
-    nameSelect.classList.replace('bg-white', 'bg-gray-100');
-    return;
-  }
-
-  students.forEach(name => {
-    const opt     = document.createElement('option');
-    opt.value     = name;
-    opt.textContent = name;
-    nameSelect.appendChild(opt);
-  });
-
-  nameSelect.disabled = false;
-  nameSelect.classList.replace('bg-gray-100', 'bg-white');
-  nameSelect.classList.remove('cursor-not-allowed');
+  // Load data beranda
+  loadBerandaStats();
+  renderKoleksi();
+  initAsesmen();
 }
 
 // ─────────────────────────────────────────────
-// 5. NAVIGASI
+// NAVIGASI
 // ─────────────────────────────────────────────
+function switchPage(page) {
+  document.querySelectorAll(".page-section").forEach(s => s.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
 
-const ALL_TABS = ['beranda', 'asesmen', 'kategori', 'koleksi', 'jurnal', 'database'];
+  document.getElementById("page-" + page).classList.add("active");
+  const navBtn = document.querySelector(`[data-page="${page}"]`);
+  if (navBtn) navBtn.classList.add("active");
 
-function switchTab(tab) {
-  state.currentTab = tab;
-
-  ALL_TABS.forEach(t => {
-    document.getElementById(`view-${t}`)?.classList.add('hidden');
-    const nav = document.getElementById(`nav-${t}`);
-    if (nav) {
-      nav.classList.remove('active');
-    }
-  });
-
-  document.getElementById(`view-${tab}`)?.classList.remove('hidden');
-  document.getElementById(`nav-${tab}`)?.classList.add('active');
-
-  // Side-effects saat buka tab tertentu
-  if (tab === 'asesmen') checkAssessmentStatus();
+  // Trigger load saat masuk halaman
+  if (page === "peta") loadPeta();
+  if (page === "jurnal") loadJurnalHistory();
+  if (page === "admin") initAdminBulk();
 }
 
 // ─────────────────────────────────────────────
-// 6. ASESMEN
+// BERANDA — STATISTIK
 // ─────────────────────────────────────────────
-
-function renderAssessmentForm() {
-  const container = document.getElementById('assessment-questions-container');
-
-  const sectionsHTML = ASSESSMENT_DATA.map(section => `
-    <div class="border-b border-gray-200 pb-6 mb-6">
-      <h3 class="font-bold text-lg text-green-700 mb-2">${section.textTitle}</h3>
-      <p class="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg mb-4 italic leading-relaxed">"${section.textContent}"</p>
-      <div class="space-y-4">
-        ${section.questions.map(q => `
-          <div>
-            <p class="font-medium text-gray-800 mb-2 text-sm">${q.id}. ${q.q}</p>
-            <div class="grid grid-cols-1 gap-2">
-              ${q.options.map((opt, i) => `
-                <label class="assessment-option flex items-center space-x-3 p-3 border rounded-lg hover:bg-green-50 cursor-pointer transition">
-                  <input type="radio" name="q${q.id}" value="${i}" required class="text-green-600 focus:ring-green-500">
-                  <span class="text-sm text-gray-700">${opt}</span>
-                </label>
-              `).join('')}
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `).join('');
-
-  container.innerHTML = `
-    <form id="assessment-form" class="space-y-8">
-      ${sectionsHTML}
-      <button type="button" onclick="submitAssessment()"
-        class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition transform hover:-translate-y-1 shadow-lg">
-        <i class="fas fa-paper-plane mr-2"></i> Kirim Jawaban & Lihat Hasil
-      </button>
-    </form>
-  `;
-}
-
-function getCategoryFromScore(score) {
-  return SCORE_CATEGORIES.find(c => score >= c.min)?.label ?? "Pembaca Dini";
-}
-
-async function submitAssessment() {
-  const form = document.getElementById('assessment-form');
-  if (!form) return;
-
-  // Validasi: semua soal harus dijawab
-  for (const section of ASSESSMENT_DATA) {
-    for (const q of section.questions) {
-      if (!form.querySelector(`input[name="q${q.id}"]:checked`)) {
-        alert(`Soal nomor ${q.id} belum dijawab.`);
-        return;
-      }
-    }
-  }
-
-  // Hitung skor
-  let score = 0;
-  ASSESSMENT_DATA.forEach(section => {
-    section.questions.forEach(q => {
-      const answer = form.querySelector(`input[name="q${q.id}"]:checked`)?.value;
-      if (parseInt(answer) === q.correct) score++;
+async function loadBerandaStats() {
+  try {
+    const data = await apiCall("getStatsSiswa", {
+      nama: state.user.nama,
+      kelas: state.user.kelas
     });
+
+    document.getElementById("stat-skor").textContent = data.skorTerakhir !== null ? data.skorTerakhir : "—";
+    document.getElementById("stat-jurnal").textContent = data.jumlahJurnal || 0;
+    document.getElementById("stat-kategori").textContent = data.kategori || "—";
+    document.getElementById("profile-badge-text").textContent = data.kategori || "Belum asesmen";
+  } catch (e) {
+    // Gagal load stats — tampilkan default, tidak perlu toast
+  }
+}
+
+// ─────────────────────────────────────────────
+// ASESMEN
+// ─────────────────────────────────────────────
+function initAsesmen() {
+  state.quiz.soalAcak = acakArray(BANK_SOAL).slice(0, CONFIG.TOTAL_SOAL);
+  state.quiz.currentIdx = 0;
+  state.quiz.jawaban = new Array(CONFIG.TOTAL_SOAL).fill(null);
+  state.quiz.selesai = false;
+
+  document.getElementById("quiz-container").style.display = "block";
+  document.getElementById("result-container").style.display = "none";
+  renderSoal();
+}
+
+function resetAsesmen() {
+  initAsesmen();
+}
+
+function renderSoal() {
+  const idx = state.quiz.currentIdx;
+  const total = CONFIG.TOTAL_SOAL;
+  const soal = state.quiz.soalAcak[idx];
+
+  // Progress
+  const pct = (idx / total) * 100;
+  document.getElementById("quiz-progress-fill").style.width = pct + "%";
+  document.getElementById("quiz-count").textContent = `${idx + 1} / ${total}`;
+
+  // Soal
+  document.getElementById("question-text").textContent = soal.soal;
+
+  // Opsi
+  const letters = ["A", "B", "C", "D"];
+  const container = document.getElementById("options-container");
+  container.innerHTML = "";
+
+  soal.opsi.forEach((opsi, i) => {
+    const btn = document.createElement("button");
+    btn.className = "option-btn" + (state.quiz.jawaban[idx] === i ? " selected" : "");
+    btn.innerHTML = `<span class="opt-letter">${letters[i]}</span> ${opsi}`;
+    btn.onclick = () => pilihJawaban(i);
+    container.appendChild(btn);
   });
 
-  const category = getCategoryFromScore(score);
-  const result   = {
-    name:      state.user.name,
-    class:     state.user.kelas,
-    category,
-    score,
-    total:     TOTAL_QUESTIONS,
-    timestamp: new Date().toISOString(),
+  // Tombol lanjut
+  document.getElementById("btn-next").disabled = state.quiz.jawaban[idx] === null;
+  document.getElementById("btn-next").textContent =
+    idx === total - 1 ? "Selesai" : "Lanjut →";
+}
+
+function pilihJawaban(idx) {
+  state.quiz.jawaban[state.quiz.currentIdx] = idx;
+  renderSoal();
+}
+
+async function nextQuestion() {
+  const idx = state.quiz.currentIdx;
+  if (state.quiz.jawaban[idx] === null) return;
+
+  if (idx < CONFIG.TOTAL_SOAL - 1) {
+    state.quiz.currentIdx++;
+    renderSoal();
+  } else {
+    await selesaikanAsesmen();
+  }
+}
+
+async function selesaikanAsesmen() {
+  // Hitung skor
+  let skor = 0;
+  state.quiz.soalAcak.forEach((soal, i) => {
+    if (state.quiz.jawaban[i] === soal.jawaban) skor++;
+  });
+
+  const kategori = getKategori(skor);
+  const info = KATEGORI_INFO[kategori];
+
+  // Tampilkan hasil
+  document.getElementById("quiz-container").style.display = "none";
+  document.getElementById("result-container").style.display = "block";
+  document.getElementById("result-score").textContent = skor;
+  document.getElementById("result-label").textContent = kategori;
+  document.getElementById("result-desc").textContent = info.desc;
+
+  // Animasi skor
+  animateNumber("result-score", 0, skor, 800);
+
+  // Simpan ke database
+  try {
+    await apiPost("simpanAsesmen", {
+      nama: state.user.nama,
+      kelas: state.user.kelas,
+      skor,
+      kategori,
+      timestamp: new Date().toISOString(),
+    });
+    showToast("Hasil asesmen berhasil disimpan!");
+    loadBerandaStats();
+  } catch (e) {
+    showToast("Hasil dihitung, tapi gagal disimpan ke database.", true);
+  }
+}
+
+function animateNumber(id, from, to, dur) {
+  const el = document.getElementById(id);
+  const step = (to - from) / (dur / 16);
+  let cur = from;
+  const timer = setInterval(() => {
+    cur = Math.min(cur + step, to);
+    el.textContent = Math.round(cur);
+    if (cur >= to) clearInterval(timer);
+  }, 16);
+}
+
+// ─────────────────────────────────────────────
+// PETA LITERASI
+// ─────────────────────────────────────────────
+async function loadPeta() {
+  const filter = document.getElementById("peta-filter-kelas").value;
+  const lists = ["dini","awal","semenjana","madya","mahir"];
+  lists.forEach(k => {
+    document.getElementById("list-" + k).innerHTML = '<p class="peta-empty"><i class="fas fa-circle-notch fa-spin"></i> Memuat...</p>';
+    document.getElementById("count-" + k).textContent = "0";
+  });
+
+  try {
+    const params = filter ? { kelas: filter } : {};
+    const data = await apiCall("getAsesmen", params);
+    state.peta = data.asesmen || [];
+    renderPeta();
+  } catch (e) {
+    lists.forEach(k => {
+      document.getElementById("list-" + k).innerHTML = '<p class="peta-empty" style="color:#ef4444">Gagal memuat</p>';
+    });
+    showToast("Gagal memuat peta literasi.", true);
+  }
+}
+
+function renderPeta() {
+  const filter = document.getElementById("peta-filter-kelas").value;
+  const data = filter ? state.peta.filter(r => r.kelas === filter) : state.peta;
+
+  const kelompok = {
+    "Pembaca Dini":      { key: "dini",      items: [] },
+    "Pembaca Awal":      { key: "awal",      items: [] },
+    "Pembaca Semenjana": { key: "semenjana", items: [] },
+    "Pembaca Madya":     { key: "madya",     items: [] },
+    "Pembaca Mahir":     { key: "mahir",     items: [] },
   };
 
-  state.userAssessmentResult = result;
-  saveAssessment(result);
-  checkAssessmentStatus();       
-  updateDashboardGreeting();
-
-  // Simpan ke cloud
-  if (window.FB) {
-    const key    = `${state.user.kelas}_${encodeURIComponent(state.user.name)}`;
-    const docRef = window.FB.doc(window.FB.db, 'artifacts', window.FB.appId, 'public', 'data', 'assessments', key);
-    try {
-      await window.FB.setDoc(docRef, result);
-    } catch (err) {
-      console.warn("[Asesmen] Gagal simpan cloud, data tersimpan lokal:", err);
+  // Ambil data terbaru per siswa
+  const terbaru = {};
+  data.forEach(r => {
+    const uid = r.kelas + "|" + r.nama;
+    if (!terbaru[uid] || r.timestamp > terbaru[uid].timestamp) {
+      terbaru[uid] = r;
     }
-  }
-}
+  });
 
-function checkAssessmentStatus() {
-  const questionsEl = document.getElementById('assessment-questions-container');
-  const resultEl    = document.getElementById('assessment-result');
+  Object.values(terbaru).forEach(r => {
+    if (kelompok[r.kategori]) kelompok[r.kategori].items.push(r);
+  });
 
-  const result = state.userAssessmentResult;
+  Object.entries(kelompok).forEach(([kat, obj]) => {
+    const listEl = document.getElementById("list-" + obj.key);
+    const countEl = document.getElementById("count-" + obj.key);
+    countEl.textContent = obj.items.length;
 
-  if (result) {
-    questionsEl.classList.add('hidden');
-    document.getElementById('result-score').textContent    = `${result.score}/${result.total}`;
-    document.getElementById('result-category').textContent = result.category;
-    resultEl.classList.remove('hidden');
-  } else {
-    questionsEl.classList.remove('hidden');
-    resultEl.classList.add('hidden');
-    renderAssessmentForm();
-  }
-}
-
-function updateDashboardGreeting() {
-  const el       = document.getElementById('assessment-greeting');
-  const category = state.userAssessmentResult?.category;
-
-  el.innerHTML = category
-    ? `Halo, kamu adalah <b>${category}</b>! <br><span class="text-sm opacity-90">Teruslah membaca untuk meningkatkan levelmu.</span>`
-    : `Kamu belum melakukan asesmen. Yuk cek level membaca kamu sekarang!`;
+    if (obj.items.length === 0) {
+      listEl.innerHTML = '<p class="peta-empty">Kosong</p>';
+    } else {
+      listEl.innerHTML = obj.items.map(r =>
+        `<div class="peta-item" title="${r.kelas} — Skor: ${r.skor}">${r.nama}</div>`
+      ).join("");
+    }
+  });
 }
 
 // ─────────────────────────────────────────────
-// 7. JURNAL
+// KOLEKSI BUKU
 // ─────────────────────────────────────────────
+function renderKoleksi() {
+  const grid = document.getElementById("book-grid");
+  grid.innerHTML = KOLEKSI_BUKU.map(b => `
+    <div class="book-card">
+      <div class="book-icon">${b.emoji}</div>
+      <h3>${b.judul}</h3>
+      <p>${b.desc}</p>
+      <a href="${b.url}" target="_blank" rel="noopener">
+        Kunjungi <i class="fas fa-arrow-up-right-from-square" style="font-size:11px"></i>
+      </a>
+    </div>
+  `).join("");
+}
 
+// ─────────────────────────────────────────────
+// JURNAL
+// ─────────────────────────────────────────────
 function countWords() {
-  const text = document.getElementById('jurnal-ringkasan').value.trim();
-  const wordCount = text === "" ? 0 : text.split(/\s+/).length;
-  const counterEl = document.getElementById('word-counter');
-  
-  counterEl.textContent = `${wordCount} kata`;
-  if (wordCount < 50) {
-    counterEl.className = "text-xs font-bold text-red-500";
-  } else {
-    counterEl.className = "text-xs font-bold text-green-600";
-  }
+  const text = document.getElementById("jurnal-ringkasan").value.trim();
+  const words = text ? text.split(/\s+/).length : 0;
+  const counter = document.getElementById("word-counter");
+  counter.textContent = `${words} / ${CONFIG.MIN_KATA_JURNAL} kata`;
+  counter.className = "word-counter " + (words >= CONFIG.MIN_KATA_JURNAL ? "ok" : "warn");
 }
 
-function submitJournal() {
-  const judul = document.getElementById('jurnal-judul').value.trim();
-  const penulis = document.getElementById('jurnal-penulis').value.trim();
-  const halAwal = document.getElementById('jurnal-hal-awal').value.trim();
-  const halAkhir = document.getElementById('jurnal-hal-akhir').value.trim();
-  const ringkasan = document.getElementById('jurnal-ringkasan').value.trim();
+async function submitJurnal() {
+  const judul    = document.getElementById("jurnal-judul").value.trim();
+  const penulis  = document.getElementById("jurnal-penulis").value.trim();
+  const halAwal  = document.getElementById("jurnal-hal-awal").value;
+  const halAkhir = document.getElementById("jurnal-hal-akhir").value;
+  const ringkasan = document.getElementById("jurnal-ringkasan").value.trim();
+  const words    = ringkasan ? ringkasan.split(/\s+/).length : 0;
 
   if (!judul || !penulis || !halAwal || !halAkhir || !ringkasan) {
-    alert("Semua kolom jurnal harus diisi, termasuk halaman.");
-    return;
+    showToast("Lengkapi semua kolom jurnal terlebih dahulu.", true); return;
+  }
+  if (parseInt(halAkhir) < parseInt(halAwal)) {
+    showToast("Halaman akhir tidak boleh kurang dari halaman awal.", true); return;
+  }
+  if (words < CONFIG.MIN_KATA_JURNAL) {
+    showToast(`Ringkasan minimal ${CONFIG.MIN_KATA_JURNAL} kata. Saat ini: ${words} kata.`, true); return;
   }
 
-  const wordCount = ringkasan === "" ? 0 : ringkasan.split(/\s+/).length;
-  if (wordCount < 50) {
-    alert(`Pemahaman Anda baru ${wordCount} kata. Minimal 50 kata.`);
-    return;
-  }
+  const btn = document.querySelector("#page-jurnal .btn-primary");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-spinner"></span> Menyimpan...';
 
-  // Optional: Simpan ke Firebase bisa ditambahkan di sini nantinya
-  alert("Jurnal berhasil dikirim!");
-  
-  // Reset Form
-  document.getElementById('jurnal-judul').value = '';
-  document.getElementById('jurnal-penulis').value = '';
-  document.getElementById('jurnal-hal-awal').value = '';
-  document.getElementById('jurnal-hal-akhir').value = '';
-  document.getElementById('jurnal-ringkasan').value = '';
-  countWords(); // Reset counter
-  switchTab('beranda');
-}
+  try {
+    await apiPost("simpanJurnal", {
+      nama: state.user.nama,
+      kelas: state.user.kelas,
+      judul, penulis,
+      halAwal, halAkhir,
+      ringkasan,
+      timestamp: new Date().toISOString(),
+    });
 
-// ─────────────────────────────────────────────
-// 8. DATABASE ADMIN
-// ─────────────────────────────────────────────
+    showToast("Jurnal berhasil disimpan!");
 
-function accessDatabase() {
-  const input = prompt("Masukkan Password Admin:");
-  if (!input) return;
-
-  // Validasi password admin
-  if (input === "tumbler albanna") {
-    // Tampilkan dashboard
-    document.getElementById('login-view').classList.add('hidden');
-    document.getElementById('dashboard-view').classList.remove('hidden');
-    document.getElementById('dashboard-view').classList.add('flex');
-    
-    // Set identitas sebagai admin
-    document.getElementById('display-name').textContent = "Administrator";
-    document.getElementById('display-class').textContent = "Sistem Kontrol";
-    document.getElementById('user-avatar').textContent = "AD";
-
-    // Arahkan langsung ke tab database
-    switchTab('database');
-  } else {
-    alert("Akses ditolak. Password tidak valid.");
+    // Reset form
+    ["jurnal-judul","jurnal-penulis","jurnal-hal-awal","jurnal-hal-akhir","jurnal-ringkasan"]
+      .forEach(id => document.getElementById(id).value = "");
+    countWords();
+    loadJurnalHistory();
+    loadBerandaStats();
+  } catch (e) {
+    showToast("Gagal menyimpan jurnal. Coba lagi.", true);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-paper-plane" style="margin-right:8px"></i>Kirim Jurnal';
   }
 }
 
-function generateBulkInputs() {
-  const container = document.getElementById('bulk-inputs');
-  const fragment  = document.createDocumentFragment();
+async function loadJurnalHistory() {
+  const container = document.getElementById("jurnal-history-list");
+  container.innerHTML = '<p style="color:#bbb;font-size:13px"><i class="fas fa-circle-notch fa-spin"></i> Memuat riwayat...</p>';
 
+  try {
+    const data = await apiCall("getJurnal", {
+      nama: state.user.nama,
+      kelas: state.user.kelas
+    });
+
+    const items = data.jurnal || [];
+    if (items.length === 0) {
+      container.innerHTML = '<p style="color:#bbb;font-size:13px">Belum ada jurnal yang ditulis.</p>';
+      return;
+    }
+
+    container.innerHTML = items.reverse().map(j => `
+      <div class="journal-item">
+        <div class="journal-item-title">📖 ${j.judul} <span style="font-weight:400;color:var(--ink-soft)">– ${j.penulis}</span></div>
+        <div class="journal-item-meta">Halaman ${j.halAwal}–${j.halAkhir} &nbsp;·&nbsp; ${formatTanggal(j.timestamp)}</div>
+        <div class="journal-item-body">${j.ringkasan}</div>
+      </div>
+    `).join("");
+  } catch (e) {
+    container.innerHTML = '<p style="color:#ef4444;font-size:13px">Gagal memuat riwayat jurnal.</p>';
+  }
+}
+
+// ─────────────────────────────────────────────
+// ADMIN — INPUT MASSAL SISWA
+// ─────────────────────────────────────────────
+function initAdminBulk() {
+  const container = document.getElementById("bulk-inputs");
+  if (container.children.length > 0) return;
+  container.innerHTML = "";
   for (let i = 1; i <= 30; i++) {
-    const input         = document.createElement('input');
-    input.type          = 'text';
-    input.name          = `student_${i}`;
-    input.placeholder   = `Siswa ${i}`;
-    input.className     = 'border border-gray-300 rounded p-2 text-sm focus:border-green-500 focus:outline-none';
-    fragment.appendChild(input);
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "bulk-input";
+    input.placeholder = `Siswa ${i}`;
+    input.id = `bulk-${i}`;
+    container.appendChild(input);
   }
-
-  container.appendChild(fragment);
 }
 
 async function addBulkStudents() {
-  const targetClass = document.getElementById('db-bulk-class').value;
-  if (!targetClass) { alert("Pilih kelas terlebih dahulu!"); return; }
+  const kelas = document.getElementById("db-bulk-class").value;
+  if (!kelas) { showToast("Pilih kelas target terlebih dahulu.", true); return; }
 
-  const inputs = document.querySelectorAll('#bulk-inputs input[type="text"]');
-  const names  = Array.from(inputs)
-    .map(i => i.value.trim())
-    .filter(Boolean);
+  const names = [];
+  for (let i = 1; i <= 30; i++) {
+    const val = document.getElementById(`bulk-${i}`).value.trim();
+    if (val) names.push(val);
+  }
 
-  if (names.length === 0) { alert("Tidak ada nama yang dimasukkan."); return; }
+  if (names.length === 0) { showToast("Isi minimal satu nama siswa.", true); return; }
 
-  // Update state
-  if (!state.studentData[targetClass]) state.studentData[targetClass] = [];
-  state.studentData[targetClass].push(...names);
+  const btn = document.querySelector(".btn-save");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-spinner"></span> Menyimpan...';
 
-  // Bersihkan input
-  inputs.forEach(i => i.value = '');
-
-  // Simpan lokal dulu (optimistic)
-  saveStudents(state.studentData);
-
-  // Simpan ke cloud
-  if (window.FB) {
-    try {
-      const docRef = window.FB.doc(window.FB.db, 'artifacts', window.FB.appId, 'public', 'data', 'students', 'master');
-      await window.FB.setDoc(docRef, state.studentData, { merge: true });
-      alert(`Berhasil menyimpan ${names.length} siswa ke Cloud (${targetClass}).`);
-    } catch (err) {
-      console.error("[DB] Gagal simpan cloud:", err);
-      alert(`Tersimpan lokal (${names.length} siswa). Gagal sinkronisasi cloud.`);
-    }
-  } else {
-    alert(`Tersimpan lokal (${names.length} siswa). Firebase tidak aktif.`);
+  try {
+    await apiPost("simpanSiswa", {
+      kelas,
+      namaSiswa: JSON.stringify(names),
+    });
+    showToast(`${names.length} siswa berhasil disimpan ke kelas ${kelas}!`);
+    // Reset inputs
+    for (let i = 1; i <= 30; i++) document.getElementById(`bulk-${i}`).value = "";
+  } catch (e) {
+    showToast("Gagal menyimpan data siswa.", true);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-cloud-arrow-up"></i> Simpan ke Database';
   }
 }
 
 // ─────────────────────────────────────────────
-// 9. RENDER HELPERS
+// ADMIN — TABS
 // ─────────────────────────────────────────────
-
-function renderBooks() {
-  document.getElementById('book-grid').innerHTML = BOOKS.map(b => `
-    <a href="${b.link}" target="_blank" rel="noopener noreferrer"
-       class="bg-white p-4 rounded-xl shadow-sm hover:shadow-md border border-gray-100 flex items-center gap-4 group">
-      <div class="${b.color} w-16 h-16 rounded-lg flex items-center justify-center text-2xl group-hover:scale-110 transition">
-        <i class="fas fa-external-link-alt"></i>
-      </div>
-      <div>
-        <h4 class="font-bold text-gray-800">${b.title}</h4>
-        <p class="text-xs text-gray-500">${b.category}</p>
-      </div>
-    </a>
-  `).join('');
+function switchAdminTab(tab) {
+  ["input","asesmen","jurnal"].forEach(t => {
+    document.getElementById("admin-tab-" + t).style.display = t === tab ? "block" : "none";
+  });
+  document.querySelectorAll(".tab-btn").forEach((btn, i) => {
+    btn.classList.toggle("active", ["input","asesmen","jurnal"][i] === tab);
+  });
 }
 
-// ─────────────────────────────────────────────
-// 10. FIREBASE REALTIME LISTENERS
-// ─────────────────────────────────────────────
+async function loadAdminAsesmen() {
+  const tbody = document.getElementById("admin-asesmen-body");
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#bbb;padding:20px"><i class="fas fa-circle-notch fa-spin"></i> Memuat...</td></tr>';
 
-function setupRealtimeListeners() {
-  if (!window.FB) return;
+  try {
+    const data = await apiCall("getAsesmen");
+    const items = data.asesmen || [];
 
-  // --- Listener 1: Data Asesmen ---
-  const assessmentsQuery = window.FB.query(
-    window.FB.collection(window.FB.db, 'artifacts', window.FB.appId, 'public', 'data', 'assessments')
-  );
-
-  window.FB.onSnapshot(assessmentsQuery, (snapshot) => {
-    // Siapkan object untuk menghitung jumlah tiap kategori
-    const counters = { dini: 0, awal: 0, semenjana: 0, madya: 0, mahir: 0 };
-
-    // Reset daftar kategori
-    ['dini', 'awal', 'semenjana', 'madya', 'mahir'].forEach(c => {
-      const el = document.getElementById(`list-${c}`);
-      if (el) el.innerHTML = '';
-    });
-
-    let activeStudents = 0;
-    const classCounts  = {};
-
-    snapshot.forEach(docSnap => {
-      const data = docSnap.data();
-      activeStudents++;
-      classCounts[data.class] = (classCounts[data.class] || 0) + 1;
-
-      const catKey = data.category?.toLowerCase().replace('pembaca ', '');
-      
-      // Tambah counter
-      if (counters[catKey] !== undefined) {
-        counters[catKey]++;
-      }
-
-      // Masukkan ke list kategori
-      const listEl = document.getElementById(`list-${catKey}`);
-      if (listEl) {
-        listEl.insertAdjacentHTML('beforeend', `
-          <li class="border-b border-gray-100 pb-1 flex justify-between items-center">
-            <span class="truncate w-24" title="${data.name}">${data.name}</span>
-            <span class="text-[10px] bg-gray-100 rounded px-1 text-gray-500 font-mono">${data.class}</span>
-          </li>
-        `);
-      }
-
-      // Sinkronisasi cloud ke state user yang sedang login
-      if (state.user && data.name === state.user.name && data.class === state.user.kelas) {
-        state.userAssessmentResult = { score: data.score ?? 0, total: data.total ?? TOTAL_QUESTIONS, category: data.category };
-        saveAssessment(state.userAssessmentResult);
-        if (state.currentTab === 'asesmen') checkAssessmentStatus();
-        updateDashboardGreeting();
-      }
-    });
-
-    // Update UI Counter di Peta Literasi
-    ['dini', 'awal', 'semenjana', 'madya', 'mahir'].forEach(c => {
-      const countEl = document.getElementById(`count-${c}`);
-      if (countEl) countEl.textContent = counters[c];
-    });
-
-    // Update dashboard stats
-    document.getElementById('dashboard-active-students').innerHTML =
-      `<span class="text-3xl font-bold text-gray-800">${activeStudents}</span> Siswa`;
-
-    const topClass = Object.entries(classCounts).sort((a, b) => b[1] - a[1])[0];
-    document.getElementById('dashboard-active-classes').innerHTML = topClass
-      ? `<span class="text-3xl font-bold text-gray-800">${topClass[0]}</span> (${topClass[1]} Siswa)`
-      : 'Belum ada data';
-  });
-
-  // --- Listener 2: Data Siswa ---
-  const studentsRef = window.FB.doc(
-    window.FB.db, 'artifacts', window.FB.appId, 'public', 'data', 'students', 'master'
-  );
-
-  window.FB.onSnapshot(studentsRef, (docSnap) => {
-    if (!docSnap.exists()) return;
-    state.studentData = docSnap.data();
-    saveStudents(state.studentData);
-
-    // Refresh dropdown nama jika sedang di halaman login
-    if (!state.user) {
-      const kelas = document.getElementById('input-class').value;
-      if (kelas) populateStudentNames();
+    if (items.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#bbb;padding:20px">Belum ada data asesmen</td></tr>';
+      return;
     }
-  });
+
+    tbody.innerHTML = items.map((r, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${formatTanggal(r.timestamp)}</td>
+        <td><strong>${r.kelas}</strong></td>
+        <td>${r.nama}</td>
+        <td><strong>${r.skor}/12</strong></td>
+        <td><span style="font-weight:700;color:var(--green-deep)">${r.kategori}</span></td>
+      </tr>
+    `).join("");
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#ef4444;padding:20px">Gagal memuat data</td></tr>';
+    showToast("Gagal memuat data asesmen.", true);
+  }
 }
 
-// ─────────────────────────────────────────────
-// 11. INIT & GLOBAL EXPORTS
-// ─────────────────────────────────────────────
+async function loadAdminJurnal() {
+  const tbody = document.getElementById("admin-jurnal-body");
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#bbb;padding:20px"><i class="fas fa-circle-notch fa-spin"></i> Memuat...</td></tr>';
 
-document.addEventListener('DOMContentLoaded', () => {
-  state.studentData = loadStudents();
+  try {
+    const data = await apiCall("getAllJurnal");
+    const items = data.jurnal || [];
 
-  const savedUser = loadUser();
-  if (savedUser) {
-    state.user = savedUser;
-    showDashboard();
+    if (items.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#bbb;padding:20px">Belum ada data jurnal</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = items.map((r, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${formatTanggal(r.timestamp)}</td>
+        <td><strong>${r.kelas}</strong></td>
+        <td>${r.nama}</td>
+        <td>${r.judul}</td>
+        <td>${r.halAwal}–${r.halAkhir}</td>
+      </tr>
+    `).join("");
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#ef4444;padding:20px">Gagal memuat data</td></tr>';
+    showToast("Gagal memuat data jurnal.", true);
   }
-
-  renderBooks();
-  generateBulkInputs();
-
-  window.addEventListener('firebase-ready', (e) => {
-    if (e.detail?.ok) setupRealtimeListeners();
-  });
-});
-
-// Mengekspos fungsi-fungsi agar bisa dipanggil dari inline HTML
-window.populateStudentNames = populateStudentNames;
-window.handleLogin = handleLogin;
-window.handleLogout = handleLogout;
-window.switchTab = switchTab;
-window.submitAssessment = submitAssessment;
-window.submitJournal = submitJournal;
-window.accessDatabase = accessDatabase;
-window.addBulkStudents = addBulkStudents;
-window.countWords = countWords;
+}
