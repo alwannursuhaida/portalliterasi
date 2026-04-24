@@ -475,7 +475,7 @@ async function checkWidgetJumat() {
   if (!widget || !container) return;
 
   const today = new Date();
-  if (today.getDay() !== 6) { widget.style.display = "none"; return; }
+  if (today.getDay() !== 5) { widget.style.display = "none"; return; }
   
   widget.style.display = "block";
   container.innerHTML = '<p style="color:#bbb;font-size:13px"><i class="fas fa-circle-notch fa-spin"></i> Memindai data...</p>';
