@@ -924,16 +924,18 @@ let chartHalamanInstance = null;
 // LAPORAN & ANALITIK DATA (CHART.JS DENGAN CACHE)
 // ─────────────────────────────────────────────
 
-let isLaporanLoaded = false;
-let chartAngkatanInstance = null;
-let chartHalamanInstance = null;
+// Menggunakan 'var' alih-alih 'let' untuk mencegah crash 
+// jika Anda tidak sengaja menempelkannya dua kali.
+var isLaporanLoaded = false;
+var chartAngkatanInstance = null;
+var chartHalamanInstance = null;
 
 async function loadLaporan(forceReload = false) {
-  // Sistem Pengunci Cache: Tidak akan memuat ulang jika tidak ditekan Refresh
+  // Sistem Pengunci Cache
   if (!forceReload && isLaporanLoaded) return;
 
   const tbody = document.getElementById("tabel-rekap-bulanan");
-  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#bbb;padding:20px"><i class="fas fa-circle-notch fa-spin"></i> Menarik data server...</td></tr>';
+  if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#bbb;padding:20px"><i class="fas fa-circle-notch fa-spin"></i> Menarik data server...</td></tr>';
 
   try {
     const [resUlasan, resJurnal] = await Promise.all([
@@ -954,31 +956,33 @@ async function loadLaporan(forceReload = false) {
       else if (k.startsWith("9")) count9++;
     });
 
-    const ctxPie = document.getElementById('chart-angkatan').getContext('2d');
-    if (chartAngkatanInstance) chartAngkatanInstance.destroy(); // Hancurkan kanvas lama sebelum menggambar baru
-    
-    chartAngkatanInstance = new Chart(ctxPie, {
-      type: 'doughnut',
-      data: {
-        labels: ['Angkatan 7', 'Angkatan 8', 'Angkatan 9'],
-        datasets: [{
-          data: [count7, count8, count9],
-          backgroundColor: ['#3b82f6', '#f5a623', '#16a05a'],
-          borderWidth: 2,
-          borderColor: '#ffffff',
-          hoverOffset: 6
-        }]
-      },
-      options: { 
-        responsive: true, 
-        maintainAspectRatio: false, // Wajib agar mematuhi tinggi 220px dari div pembungkus
-        plugins: { 
-          legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: "'Plus Jakarta Sans', sans-serif", size: 11 } } },
-          tooltip: { bodyFont: { family: "'Plus Jakarta Sans', sans-serif" } }
+    const canvasPie = document.getElementById('chart-angkatan');
+    if (canvasPie) {
+      const ctxPie = canvasPie.getContext('2d');
+      if (chartAngkatanInstance) chartAngkatanInstance.destroy(); 
+      
+      chartAngkatanInstance = new Chart(ctxPie, {
+        type: 'doughnut',
+        data: {
+          labels: ['Angkatan 7', 'Angkatan 8', 'Angkatan 9'],
+          datasets: [{
+            data: [count7, count8, count9],
+            backgroundColor: ['#3b82f6', '#f5a623', '#16a05a'],
+            borderWidth: 2,
+            borderColor: '#ffffff',
+            hoverOffset: 6
+          }]
         },
-        cutout: '65%' // Membuat donat lebih tipis dan elegan
-      }
-    });
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false, 
+          plugins: { 
+            legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: "'Plus Jakarta Sans', sans-serif", size: 11 } } }
+          },
+          cutout: '65%' 
+        }
+      });
+    }
 
     // --- 2. BAR CHART CHART.JS: Volume Halaman Jurnal ---
     const halamanPerKelas = {};
@@ -995,36 +999,36 @@ async function loadLaporan(forceReload = false) {
     const labelKelas = Object.keys(halamanPerKelas).sort();
     const dataHalaman = labelKelas.map(k => halamanPerKelas[k]);
 
-    const ctxBar = document.getElementById('chart-halaman').getContext('2d');
-    if (chartHalamanInstance) chartHalamanInstance.destroy();
+    const canvasBar = document.getElementById('chart-halaman');
+    if (canvasBar) {
+      const ctxBar = canvasBar.getContext('2d');
+      if (chartHalamanInstance) chartHalamanInstance.destroy();
 
-    chartHalamanInstance = new Chart(ctxBar, {
-      type: 'bar',
-      data: {
-        labels: labelKelas,
-        datasets: [{
-          label: 'Total Halaman Dibaca',
-          data: dataHalaman,
-          backgroundColor: '#16a05a',
-          borderRadius: 4,
-          barPercentage: 0.6
-        }]
-      },
-      options: { 
-        responsive: true, 
-        maintainAspectRatio: false, 
-        plugins: { 
-          legend: { display: false },
-          tooltip: { bodyFont: { family: "'Plus Jakarta Sans', sans-serif" } }
+      chartHalamanInstance = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+          labels: labelKelas,
+          datasets: [{
+            label: 'Total Halaman Dibaca',
+            data: dataHalaman,
+            backgroundColor: '#16a05a',
+            borderRadius: 4,
+            barPercentage: 0.6
+          }]
         },
-        scales: { 
-          y: { beginAtZero: true, grid: { color: '#eef2ef' }, ticks: { font: { size: 10 } } },
-          x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false, 
+          plugins: { legend: { display: false } },
+          scales: { 
+            y: { beginAtZero: true, grid: { color: '#eef2ef' }, ticks: { font: { size: 10 } } },
+            x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+          }
         }
-      }
-    });
+      });
+    }
 
-    // --- 3. BUKU TERPOPULER (Sama seperti sebelumnya) ---
+    // --- 3. BUKU TERPOPULER ---
     const bukuPopuler = {};
     ulasan.forEach(u => {
       if (!u.judulbuku) return;
@@ -1033,13 +1037,16 @@ async function loadLaporan(forceReload = false) {
     });
 
     const listBuku = Object.entries(bukuPopuler).sort((a, b) => b[1] - a[1]);
-    document.getElementById("total-buku-terulas").textContent = listBuku.length;
+    const elTotal = document.getElementById("total-buku-terulas");
+    if (elTotal) elTotal.textContent = listBuku.length;
     
+    const elTop = document.getElementById("top-book-1");
+    const elTopCount = document.getElementById("top-book-1-count");
     if (listBuku.length > 0) {
-      document.getElementById("top-book-1").textContent = listBuku[0][0];
-      document.getElementById("top-book-1-count").textContent = `${listBuku[0][1]} kali diulas`;
+      if (elTop) elTop.textContent = listBuku[0][0];
+      if (elTopCount) elTopCount.textContent = `${listBuku[0][1]} kali diulas`;
     } else {
-      document.getElementById("top-book-1").textContent = "Belum ada data";
+      if (elTop) elTop.textContent = "Belum ada data";
     }
 
     // --- 4. TABEL REKAPITULASI BULANAN ---
@@ -1096,13 +1103,13 @@ async function loadLaporan(forceReload = false) {
       `;
     }).join("");
 
-    tbody.innerHTML = rekapBulananHtml || '<tr><td colspan="6" style="text-align:center;color:#bbb;padding:20px">Belum ada rekam jejak.</td></tr>';
+    if (tbody) tbody.innerHTML = rekapBulananHtml || '<tr><td colspan="6" style="text-align:center;color:#bbb;padding:20px">Belum ada rekam jejak.</td></tr>';
 
     isLaporanLoaded = true;
     if (forceReload) showToast("Data analitik diperbarui.");
 
   } catch (e) {
     console.error(e);
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#ef4444;padding:20px">Gagal memuat rekapitulasi analitik.</td></tr>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#ef4444;padding:20px">Gagal memuat rekapitulasi analitik.</td></tr>';
   }
 }
