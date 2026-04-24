@@ -170,9 +170,22 @@ async function apiCall(action, payload = {}) {
 
 async function apiPost(action, payload = {}) {
   const body = new URLSearchParams({ action, ...payload });
-  const res = await fetch(CONFIG.API_URL, { method: "POST", body });
-  if (!res.ok) throw new Error("Gagal menyimpan data");
-  return res.json();
+  const res = await fetch(CONFIG.API_URL, { 
+    method: "POST", 
+    body,
+    redirect: "follow" 
+  });
+  
+  if (!res.ok) throw new Error("Gagal terhubung ke server");
+  
+  const data = await res.json();
+  
+  // SKEPTISME DITERAPKAN: Jika server mengembalikan status error, lempar sebagai kegagalan!
+  if (data.status === "error") {
+    throw new Error(data.message);
+  }
+  
+  return data;
 }
 
 // ─────────────────────────────────────────────
@@ -636,7 +649,8 @@ async function addBulkStudents() {
     // Reset inputs
     for (let i = 1; i <= 30; i++) document.getElementById(`bulk-${i}`).value = "";
   } catch (e) {
-    showToast("Gagal menyimpan data siswa.", true);
+    // Memunculkan pesan error jujur dari server
+    showToast(e.message || "Gagal menyimpan data siswa.", true);
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<i class="fas fa-cloud-arrow-up"></i> Simpan ke Database';
