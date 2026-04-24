@@ -741,97 +741,40 @@
 
     /* ===== OPTIMASI MOBILE TOTAL (SLIM MODE) ===== */
     @media (max-width: 768px) {
-      /* 1. Paksa Sidebar Menjadi Header Tipis */
-      .sidebar {
-        width: 100%;
-        min-width: unset;
-        height: auto !important; /* Batalkan tinggi 100vh */
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        border-right: none;
-        border-bottom: 1px solid #eef2ef;
-        background: rgba(255, 255, 255, 0.95); /* Efek Blur Transparan */
-        backdrop-filter: blur(10px);
-        display: block;
-      }
-
-      /* 2. Logo Dibuat Satu Baris dengan Navigasi */
-      .sidebar-brand {
-        padding: 8px 16px;
-        border-bottom: none;
-        justify-content: flex-start;
-        gap: 8px;
-      }
-      .sidebar-brand-icon { width: 28px; height: 28px; border-radius: 8px; }
-      .sidebar-brand-icon i { font-size: 12px; }
-      .sidebar-brand-name { font-size: 14px; font-weight: 800; }
-      .sidebar-brand-sub { display: none; } /* Sembunyikan teks sub-logo di HP */
-
-      /* 3. Navigasi Horizontal (Hanya Satu Baris) */
-      nav {
-        display: flex;
-        flex-direction: row !important; /* Paksa horizontal */
-        overflow-x: auto; /* Aktifkan geser samping */
-        padding: 4px 12px 10px;
-        gap: 6px;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none; /* Sembunyikan scrollbar di Firefox */
-      }
-      nav::-webkit-scrollbar { display: none; } /* Sembunyikan scrollbar di Chrome/Safari */
-
-      .nav-item {
-        flex: 0 0 auto; /* Jangan biarkan menu mengecil atau membungkus */
-        padding: 6px 14px;
-        font-size: 12px;
-        margin: 0;
-        background: #f1f5f9;
-        border-radius: 100px;
-      }
-      .nav-item i { font-size: 12px; margin-right: 4px; }
-      .nav-section-label { display: none; } /* Buang label "Menu" dan "Admin" */
-
-      /* 4. Sembunyikan Profil di Sidebar HP agar Tidak Menumpuk */
-      .sidebar-user {
-        position: absolute;
-        top: 8px;
-        right: 12px;
-        padding: 0;
-        border: none;
-        background: transparent;
-      }
-      .user-card { display: none; } /* Sembunyikan nama & avatar di header */
-      .btn-logout { 
-        padding: 6px; 
-        border-radius: 50%; 
-        width: 32px; 
-        height: 32px; 
-        background: #fff;
-        border: 1px solid #fecaca;
-      }
-      .btn-logout span { display: none; } /* Sembunyikan teks "Keluar", sisakan ikon */
-
-      /* 5. Konten Utama Mulai Tepat di Bawah Header */
-      #view-dashboard { flex-direction: column; }
-      .main { 
-        padding: 12px; 
-        width: 100%;
-        overflow-x: hidden; 
-      }
-      
-      /* 6. Kompresi Kartu & Grid */
-      .stats-grid, .quick-grid, .peta-grid, .book-grid, .form-row {
-        grid-template-columns: 1fr;
-        gap: 10px;
-      }
-      .card { padding: 16px; border-radius: 12px; }
-      .page-title { font-size: 20px; letter-spacing: -0.5px; }
-      
-      /* 7. Perbaikan Modal & Form */
-      .modal { width: 90%; padding: 20px; border-radius: 16px; }
-      #jumat-list-container { max-height: 200px !important; }
-      .layout-ganda { flex-direction: column; gap: 16px; }
-    }
+  #view-dashboard { flex-direction: column; }
+  .sidebar { 
+    width: 100%; 
+    height: auto !important; /* Kunci efisiensi di HP */
+    position: sticky; 
+    top: 0; 
+    z-index: 1000; 
+    border-right: none; 
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+  .sidebar-brand { padding: 10px 16px; border-bottom: none; }
+  .sidebar-brand-sub, .sidebar-user, .nav-section-label { display: none; }
+  
+  nav { 
+    display: flex !important; 
+    flex-direction: row !important; 
+    overflow-x: auto; 
+    padding: 0 12px 10px; 
+    gap: 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .nav-item { 
+    flex: 0 0 auto; 
+    padding: 6px 12px; 
+    font-size: 12px; 
+    background: #f1f5f9; 
+    border-radius: 20px; 
+  }
+  .main { padding: 12px; width: 100%; }
+  .layout-ganda { flex-direction: column; gap: 16px; }
+  .layout-samping { width: 100%; }
+  #jumat-list-container { max-height: 200px !important; }
+}
   </style>
 </head>
 <body>
