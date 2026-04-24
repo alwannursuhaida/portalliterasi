@@ -1083,58 +1083,77 @@
     <!-- JURNAL -->
     <section id="page-jurnal" class="page-section">
       <p class="page-title">Tulis Jurnal Literasi</p>
-      <p class="page-subtitle">Catat buku yang kamu baca dan tuliskan pemahamanmu.</p>
+      <p class="page-subtitle">Catat buku yang kamu baca dan tuliskan pemahamanmu di sini.</p>
 
-      <div class="card jurnal-form">
-        <div class="form-group">
-          <label>Judul Buku</label>
-          <div class="input-wrap">
-            <i class="fas fa-book"></i>
-            <input type="text" id="jurnal-judul" class="form-input" placeholder="Judul buku yang kamu baca">
+      <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start;">
+        
+        <div style="flex: 1; min-width: 300px;">
+          <div class="card jurnal-form" style="max-width: 100%;">
+            <div class="form-group">
+              <label>Judul Buku</label>
+              <div class="input-wrap">
+                <i class="fas fa-book"></i>
+                <input type="text" id="jurnal-judul" class="form-input" placeholder="Judul buku yang kamu baca">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Penulis</label>
+              <div class="input-wrap">
+                <i class="fas fa-feather-pointed"></i>
+                <input type="text" id="jurnal-penulis" class="form-input" placeholder="Nama penulis buku">
+              </div>
+            </div>
+            <div class="form-row form-group">
+              <div>
+                <label>Dari Halaman</label>
+                <div class="input-wrap">
+                  <i class="fas fa-bookmark"></i>
+                  <input type="number" id="jurnal-hal-awal" class="form-input" placeholder="1" min="1">
+                </div>
+              </div>
+              <div>
+                <label>Sampai Halaman</label>
+                <div class="input-wrap">
+                  <i class="fas fa-bookmark"></i>
+                  <input type="number" id="jurnal-hal-akhir" class="form-input" placeholder="10" min="1">
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <label style="margin:0">Apa yang kamu pahami dari bacaan ini?</label>
+                <span class="word-counter warn" id="word-counter">0 / 50 kata</span>
+              </div>
+              <textarea id="jurnal-ringkasan" class="form-input" rows="5" placeholder="Tuliskan pemahamanmu di sini, minimal 50 kata..." oninput="countWords()"></textarea>
+            </div>
+            <button class="btn-primary" onclick="submitJurnal()">
+              <i class="fas fa-paper-plane" style="margin-right:8px"></i>Kirim Jurnal
+            </button>
+          </div>
+
+          <div class="jurnal-history" style="margin-top: 32px;">
+            <h3><i class="fas fa-clock-rotate-left" style="color:var(--green-main);margin-right:8px"></i>Riwayat Jurnalmu</h3>
+            <div id="jurnal-history-list"></div>
           </div>
         </div>
-        <div class="form-group">
-          <label>Penulis</label>
-          <div class="input-wrap">
-            <i class="fas fa-feather-pointed"></i>
-            <input type="text" id="jurnal-penulis" class="form-input" placeholder="Nama penulis buku">
-          </div>
-        </div>
-        <div class="form-row form-group">
-          <div>
-            <label>Dari Halaman</label>
-            <div class="input-wrap">
-              <i class="fas fa-bookmark"></i>
-              <input type="number" id="jurnal-hal-awal" class="form-input" placeholder="1" min="1">
+
+        <div id="widget-jumat" style="width: 320px; display: none;">
+          <div class="card" style="background: #fffbfa; border: 2px solid #fecaca; padding: 20px;">
+            <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px;">
+              <div style="width: 36px; height: 36px; border-radius: 10px; background: #fee2e2; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i class="fas fa-bullhorn" style="color: #dc2626; font-size: 16px;"></i>
+              </div>
+              <div>
+                <h3 style="color: #991b1b; font-size: 15px; font-weight: 800; line-height: 1.2;">Target Jumat</h3>
+                <p style="font-size: 11px; font-weight: 600; color: #dc2626; margin-top: 2px;">Daftar Siswa Belum Mengisi</p>
+              </div>
+            </div>
+            <div id="jumat-list-container" style="max-height: 480px; overflow-y: auto; padding-right: 4px;">
+              <p style="color: #bbb; font-size: 13px;"><i class="fas fa-circle-notch fa-spin"></i> Memindai data server...</p>
             </div>
           </div>
-          <div>
-            <label>Sampai Halaman</label>
-            <div class="input-wrap">
-              <i class="fas fa-bookmark"></i>
-              <input type="number" id="jurnal-hal-akhir" class="form-input" placeholder="10" min="1">
-            </div>
-          </div>
         </div>
-        <div class="form-group">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <label style="margin:0">Apa yang kamu pahami dari bacaan ini?</label>
-            <span class="word-counter warn" id="word-counter">0 / 50 kata</span>
-          </div>
-          <textarea id="jurnal-ringkasan" class="form-input" rows="5"
-            placeholder="Tuliskan pemahamanmu di sini, minimal 50 kata..."
-            oninput="countWords()"></textarea>
-        </div>
-        <button class="btn-primary" onclick="submitJurnal()">
-          <i class="fas fa-paper-plane" style="margin-right:8px"></i>Kirim Jurnal
-        </button>
-      </div>
 
-      <div class="jurnal-history">
-        <h3><i class="fas fa-clock-rotate-left" style="color:var(--green-main);margin-right:8px"></i>Riwayat Jurnalmu</h3>
-        <div id="jurnal-history-list">
-          <p style="color:#bbb;font-size:13px">Memuat riwayat...</p>
-        </div>
       </div>
     </section>
 
