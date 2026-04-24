@@ -1137,12 +1137,29 @@
           </div>
         </div>
 
-        <div id="widget-jumat" style="width: 320px; display: none;">
-          <div class="card" style="background: #fffbfa; border: 2px solid #fecaca; padding: 20px;">
-            <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px;">
-              <div style="width: 36px; height: 36px; border-radius: 10px; background: #fee2e2; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                <i class="fas fa-bullhorn" style="color: #dc2626; font-size: 16px;"></i>
+        <!-- (Kode di atasnya adalah div class="layout-utama" yang berisi form jurnal) -->
+
+          <!-- KOLOM KANAN: WIDGET JUMAT (TAMBAHKAN INI) -->
+          <div id="widget-jumat" class="layout-samping" style="display: none;">
+            <div class="card" style="background: #fffbfa; border: 2px solid #fecaca; padding: 20px;">
+              <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px;">
+                <div style="width: 36px; height: 36px; border-radius: 10px; background: #fee2e2; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  <i class="fas fa-bullhorn" style="color: #dc2626; font-size: 16px;"></i>
+                </div>
+                <div>
+                  <h3 style="color: #991b1b; font-size: 15px; font-weight: 800; line-height: 1.2;">Target Jumat</h3>
+                  <p style="font-size: 11px; font-weight: 600; color: #dc2626; margin-top: 2px;">Daftar Siswa Belum Mengisi</p>
+                </div>
               </div>
+              <div id="jumat-list-container" style="max-height: 480px; overflow-y: auto; padding-right: 4px;">
+                <p style="color: #bbb; font-size: 13px;"><i class="fas fa-circle-notch fa-spin"></i> Memindai data...</p>
+              </div>
+            </div>
+          </div>
+          <!-- AKHIR WIDGET JUMAT -->
+
+        </div> <!-- Ini adalah penutup div class="layout-ganda" -->
+      </section>
               <div>
                 <h3 style="color: #991b1b; font-size: 15px; font-weight: 800; line-height: 1.2;">Target Jumat</h3>
                 <p style="font-size: 11px; font-weight: 600; color: #dc2626; margin-top: 2px;">Daftar Siswa Belum Mengisi</p>
