@@ -739,15 +739,57 @@
     .modal h3 { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
     .modal p { font-size: 14px; color: var(--ink-soft); margin-bottom: 20px; }
 
-    /* Responsive */
+    /* ===== PENYEMPURNAAN MOBILE TOTAL (RESPONSIVE) ===== */
     @media (max-width: 768px) {
+      /* 1. Layout Utama & Padding */
       #view-dashboard { flex-direction: column; }
-      .sidebar { width: 100%; min-width: unset; height: auto; position: static; }
-      nav { display: flex; flex-direction: row; overflow-x: auto; padding: 8px; }
-      .nav-item { white-space: nowrap; }
+      .main { padding: 16px 12px; }
+      .page-title { font-size: 22px; }
+      .page-subtitle { font-size: 13px; margin-bottom: 20px; }
+
+      /* 2. Navigasi Cerdas (Sticky & Swipeable) */
+      .sidebar { width: 100%; min-width: unset; height: auto; position: sticky; top: 0; z-index: 999; border-right: none; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+      .sidebar-brand { padding: 12px 16px; border-bottom: none; display: flex; justify-content: center; align-items: center; }
+      .sidebar-brand-icon { width: 32px; height: 32px; }
+      .sidebar-brand-icon i { font-size: 14px; }
+      .sidebar-brand-name { font-size: 16px; }
+      .sidebar-brand-sub { font-size: 9px; }
+      
+      nav { display: flex; flex-direction: row; overflow-x: auto; padding: 0 12px 12px; gap: 8px; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
+      .nav-item { flex: 0 0 auto; white-space: nowrap; padding: 8px 16px; font-size: 13px; margin: 0; justify-content: center; border-radius: 20px; }
       .nav-section-label { display: none; }
-      .main { padding: 16px; }
-      .form-row { grid-template-columns: 1fr; }
+      
+      /* Profil & Logout Kompak di Layar Kecil */
+      .sidebar-user { padding: 8px 16px; display: flex; justify-content: space-between; align-items: center; border-top: none; background: #f8faf9; border-bottom: 1px solid #eef2ef; }
+      .user-card { padding: 0; margin: 0; background: transparent; }
+      .user-avatar { width: 28px; height: 28px; font-size: 11px; }
+      .btn-logout { width: auto; padding: 6px 12px; font-size: 11px; }
+
+      /* 3. Restrukturisasi Grid & Kartu (Hukum 1 Kolom) */
+      .stats-grid, .quick-grid, .book-grid, .peta-grid, .form-row, .bulk-grid { grid-template-columns: 1fr; gap: 12px; }
+      .card, .stat-card, .book-card, .profile-card, .jurnal-form, .modal, #admin-tab-input { padding: 16px; }
+      .layout-ganda { flex-direction: column; gap: 20px; }
+      .layout-samping { width: 100%; }
+      #jumat-list-container { max-height: 240px !important; }
+
+      /* 4. Penyempurnaan Halaman Login */
+      #view-login { padding: 16px; }
+      .login-card { margin: 0 auto; padding: 32px 20px; border-radius: 20px; }
+      .login-logo { width: 56px; height: 56px; }
+
+      /* 5. Keamanan Tabel (Mencegah Layar Melebar) */
+      .data-table { font-size: 11px; }
+      .data-table th, .data-table td { padding: 8px 10px; white-space: nowrap; }
+      .tab-bar { overflow-x: auto; padding-bottom: 8px; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+      .tab-btn { flex-shrink: 0; }
+
+      /* 6. Penyesuaian Asesmen & Laporan */
+      .result-score { font-size: 48px; }
+      .result-label { font-size: 20px; }
+      .option-btn { padding: 12px 14px; font-size: 13px; }
+      .filter-bar { flex-direction: column; align-items: stretch; }
+      .filter-select, .btn-refresh { width: 100%; justify-content: center; }
+      #page-laporan > div:nth-of-type(1) { grid-template-columns: 1fr; }
     }
   </style>
 </head>
