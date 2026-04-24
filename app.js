@@ -289,18 +289,22 @@ function enterDashboard() {
 // NAVIGASI
 // ─────────────────────────────────────────────
 function switchPage(page) {
-  document.querySelectorAll(".page-section").forEach(s => s.classList.remove("active"));
-  document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
-
+  document.querySelectorAll(".page-section").forEach(el => el.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
+  
   document.getElementById("page-" + page).classList.add("active");
-  const navBtn = document.querySelector(`[data-page="${page}"]`);
+  const navBtn = document.querySelector(`.nav-item[data-page="${page}"]`);
   if (navBtn) navBtn.classList.add("active");
 
-  // Trigger load saat masuk halaman
+  // Pemicu pemuatan data halaman secara dinamis
+  if (page === "beranda") loadLeaderboard(); // <-- Tambahkan ini
+  if (page === "ulasan") loadUlasanHistory();
+  if (page === "admin") {
+    loadAdminAsesmen();
+    loadAdminJurnal();
+  }
   if (page === "peta") loadPeta();
-  if (page === "jurnal") loadJurnalHistory();
-  if (page === "admin") initAdminBulk();
-   if (page === "ulasan") loadUlasanHistory(); // <-- Tambahan baru
+  if (page === "koleksi") renderBuku();
 }
 
 // ─────────────────────────────────────────────
@@ -876,5 +880,36 @@ async function loadUlasanHistory() {
     `).join("");
   } catch (e) {
     container.innerHTML = '<p style="color:#ef4444;font-size:13px">Gagal memuat arsip ulasan.</p>';
+  }
+}
+// ─────────────────────────────────────────────
+// LEADERBOARD (BINTANG LITERASI)
+// ─────────────────────────────────────────────
+async function loadLeaderboard() {
+  try {
+    const data = await apiCall("getLeaderboard");
+    if (data && data.leaderboard) {
+      const lb = data.leaderboard;
+
+      // Update Siswa Putra
+      document.getElementById("lb-siswa-putra").textContent = lb.siswaPutra.nama;
+      document.getElementById("lb-siswa-putra-desc").textContent = `Kelas ${lb.siswaPutra.kelas} | ${lb.siswaPutra.count} Ulasan`;
+
+      // Update Siswi Putri
+      document.getElementById("lb-siswa-putri").textContent = lb.siswaPutri.nama;
+      document.getElementById("lb-siswa-putri-desc").textContent = `Kelas ${lb.siswaPutri.kelas} | ${lb.siswaPutri.count} Ulasan`;
+
+      // Update Kelas Putra
+      document.getElementById("lb-kelas-putra").textContent = lb.kelasPutra.kelas;
+      document.getElementById("lb-kelas-putra-desc").textContent = `Total ${lb.kelasPutra.count} Ulasan Buku`;
+
+      // Update Kelas Putri
+      document.getElementById("lb-kelas-putri").textContent = lb.kelasPutri.kelas;
+      document.getElementById("lb-kelas-putri-desc").textContent = `Total ${lb.kelasPutri.count} Ulasan Buku`;
+    }
+  } catch (e) {
+    console.error("Gagal memuat leaderboard:", e.message);
+    document.getElementById("lb-siswa-putra").textContent = "Gagal memuat";
+    document.getElementById("lb-siswa-putri").textContent = "Gagal memuat";
   }
 }
