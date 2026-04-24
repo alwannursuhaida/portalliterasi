@@ -854,6 +854,9 @@
       <button class="nav-item" data-page="jurnal" onclick="switchPage('jurnal')">
         <i class="fas fa-pen-to-square"></i> Tulis Jurnal
       </button>
+      <button class="nav-item" data-page="ulasan" onclick="switchPage('ulasan')">
+        <i class="fas fa-star-half-stroke"></i> Ulasan Buku
+      </button>
       <div id="nav-admin-wrap" style="display:none">
         <div class="nav-section-label">Admin</div>
         <button class="nav-item" data-page="admin" onclick="switchPage('admin')">
@@ -1104,6 +1107,48 @@
       </div>
     </section>
 
+    <section id="page-ulasan" class="page-section">
+      <p class="page-title">Ulasan Buku</p>
+      <p class="page-subtitle">Berikan penilaian dan ulasanmu untuk buku yang baru selesai dibaca.</p>
+
+      <div class="card jurnal-form">
+        <div class="form-group">
+          <label>Judul Buku</label>
+          <div class="input-wrap">
+            <i class="fas fa-book"></i>
+            <input type="text" id="ulasan-judul" class="form-input" placeholder="Judul buku yang dibaca">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Rating Buku</label>
+          <div class="input-wrap">
+            <i class="fas fa-star" style="color:var(--gold)"></i>
+            <select id="ulasan-rating" class="form-select">
+              <option value="5">5 Bintang — Sangat Suka! ⭐⭐⭐⭐⭐</option>
+              <option value="4">4 Bintang — Bagus ⭐⭐⭐⭐</option>
+              <option value="3">3 Bintang — Cukup ⭐⭐⭐</option>
+              <option value="2">2 Bintang — Kurang ⭐⭐</option>
+              <option value="1">1 Bintang — Tidak Suka ⭐</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Ulasan / Pendapatmu</label>
+          <textarea id="ulasan-teks" class="form-input" rows="4" placeholder="Ceritakan pendapatmu tentang buku ini secara singkat..."></textarea>
+        </div>
+        <button class="btn-primary" id="btn-submit-ulasan" onclick="submitUlasan()">
+          <i class="fas fa-paper-plane" style="margin-right:8px"></i>Kirim Ulasan
+        </button>
+      </div>
+
+      <div class="jurnal-history" style="margin-top:32px">
+        <h3><i class="fas fa-comments" style="color:var(--green-main);margin-right:8px"></i>Riwayat Ulasanmu</h3>
+        <div id="ulasan-history-list">
+          <p style="color:#bbb;font-size:13px"><i class="fas fa-circle-notch fa-spin"></i> Memuat riwayat...</p>
+        </div>
+      </div>
+    </section>
+    
     <!-- ADMIN -->
     <section id="page-admin" class="page-section">
       <div class="admin-header">
