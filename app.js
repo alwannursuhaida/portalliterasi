@@ -726,49 +726,114 @@ async function loadAdminJurnal() {
 // ─────────────────────────────────────────────
 // ULASAN BUKU
 // ─────────────────────────────────────────────
-async function submitUlasan() {
-  const judul = document.getElementById("ulasan-judul").value.trim();
-  const rating = document.getElementById("ulasan-rating").value;
-  const ulasan = document.getElementById("ulasan-teks").value.trim();
+// ─────────────────────────────────────────────
+// ULASAN BUKU (VERSI ANALISIS KETAT)
+// ─────────────────────────────────────────────
 
-  if (!judul || !ulasan) {
-    showToast("Lengkapi judul dan ulasan terlebih dahulu.", true); 
+// Koleksi Meme Acak (Sopan & Lucu)
+const KOLEKSI_MEME = [
+  { 
+    title: "Luar Biasa! 🧠✨", 
+    desc: "Membaca ulasanmu membuktikan satu hal: kapasitas otakmu baru saja bertambah berat 10 gram hari ini.", 
+    img: "https://media.giphy.com/media/d3mlE7uhX8KFgEmY/giphy.gif" 
+  },
+  { 
+    title: "Analisis Tajam! 🪒", 
+    desc: "Kritikmu lebih tajam dari silet cukur. Para filsuf dan kritikus sastra pasti menangis haru melihat tulisanmu.", 
+    img: "https://media.giphy.com/media/l3q2XhfQ8oCkm1Ts4/giphy.gif" 
+  },
+  { 
+    title: "Terima Kasih, Ilmuwan! 🔬", 
+    desc: "Pemahamanmu tentang buku ini sangat mendalam. Kami curiga kamu sebenarnya penulis bayangannya.", 
+    img: "https://media.giphy.com/media/26gsjCZpPolPr3sBy/giphy.gif" 
+  },
+  { 
+    title: "Selesai Dieksekusi! ☕", 
+    desc: "Tugas selesai. Sekarang kamu boleh istirahat, minum teh, dan membanggakan dirimu selama 5 menit.", 
+    img: "https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif" 
+  }
+];
+
+// Helper: Menghitung kata secara real-time
+function hitungKataUlasan(inputId, counterId, minWords) {
+  const text = document.getElementById(inputId).value.trim();
+  const words = text ? text.split(/\s+/).length : 0;
+  const counter = document.getElementById(counterId);
+  counter.textContent = `${words} / ${minWords} kata`;
+  counter.className = "word-counter " + (words >= minWords ? "ok" : "warn");
+  return words;
+}
+
+async function submitUlasanBaru() {
+  // Ambil data
+  const judul = document.getElementById("ulasan-judul").value.trim();
+  const penulis = document.getElementById("ulasan-penulis").value.trim();
+  const rating = document.getElementById("ulasan-rating").value;
+  const kesan = document.getElementById("ulasan-kesan").value.trim();
+
+  // Validasi Ketat Minimal 25 Kata
+  const wKandungan = hitungKataUlasan('ulasan-kandungan', 'count-kandungan', 25);
+  const wKekuatan = hitungKataUlasan('ulasan-kekuatan', 'count-kekuatan', 25);
+  const wKelemahan = hitungKataUlasan('ulasan-kelemahan', 'count-kelemahan', 25);
+
+  if (!judul || !penulis) {
+    showToast("Identitas buku (Judul & Penulis) tidak boleh kosong.", true); return;
+  }
+  
+  if (wKandungan < 25 || wKekuatan < 25 || wKelemahan < 25) {
+    showToast("Sikap skeptis membutuhkan analisis mendalam! Penuhi batas minimal 25 kata di setiap kotak evaluasi.", true); 
     return;
   }
 
   const btn = document.getElementById("btn-submit-ulasan");
   btn.disabled = true;
-  btn.innerHTML = '<span class="loading-spinner"></span> Menyimpan...';
+  btn.innerHTML = '<span class="loading-spinner"></span> Menyerahkan Bukti...';
 
   try {
     await apiPost("simpanUlasan", {
       nama: state.user.nama,
       kelas: state.user.kelas,
       judulBuku: judul,
+      penulisBuku: penulis,
       rating: rating,
-      ulasan: ulasan,
+      ulasanKandungan: document.getElementById("ulasan-kandungan").value.trim(),
+      kekuatanBuku: document.getElementById("ulasan-kekuatan").value.trim(),
+      kelemahanBuku: document.getElementById("ulasan-kelemahan").value.trim(),
+      kesanBuku: kesan,
       timestamp: new Date().toISOString(),
     });
 
-    showToast("Ulasan berhasil disimpan!");
-    
-    // Reset form
-    document.getElementById("ulasan-judul").value = "";
-    document.getElementById("ulasan-teks").value = "";
+    // Reset Form
+    ["judul", "penulis", "kandungan", "kekuatan", "kelemahan", "kesan"].forEach(id => {
+      document.getElementById(`ulasan-${id}`).value = "";
+    });
     document.getElementById("ulasan-rating").value = "5";
     
-    loadUlasanHistory();
+    // Reset Counter UI
+    hitungKataUlasan('ulasan-kandungan', 'count-kandungan', 25);
+    hitungKataUlasan('ulasan-kekuatan', 'count-kekuatan', 25);
+    hitungKataUlasan('ulasan-kelemahan', 'count-kelemahan', 25);
+
+    loadUlasanHistory(); // Refresh riwayat
+
+    // PANGGIL KEJUTAN MEME
+    const randomMeme = KOLEKSI_MEME[Math.floor(Math.random() * KOLEKSI_MEME.length)];
+    document.getElementById("meme-title").textContent = randomMeme.title;
+    document.getElementById("meme-desc").textContent = randomMeme.desc;
+    document.getElementById("meme-img").src = randomMeme.img;
+    document.getElementById("meme-modal").style.display = "flex";
+
   } catch (e) {
-    showToast("Gagal menyimpan ulasan. " + e.message, true);
+    showToast("Gagal menyimpan ulasan. Pastikan koneksi stabil. " + e.message, true);
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '<i class="fas fa-paper-plane" style="margin-right:8px"></i>Kirim Ulasan';
+    btn.innerHTML = '<i class="fas fa-paper-plane" style="margin-right:8px"></i>Kirim Evaluasi Kritis';
   }
 }
 
 async function loadUlasanHistory() {
   const container = document.getElementById("ulasan-history-list");
-  container.innerHTML = '<p style="color:#bbb;font-size:13px"><i class="fas fa-circle-notch fa-spin"></i> Memuat riwayat...</p>';
+  container.innerHTML = '<p style="color:#bbb;font-size:13px"><i class="fas fa-circle-notch fa-spin"></i> Menarik data arsip...</p>';
 
   try {
     const data = await apiCall("getUlasan", {
@@ -778,21 +843,38 @@ async function loadUlasanHistory() {
 
     const items = data.ulasan || [];
     if (items.length === 0) {
-      container.innerHTML = '<p style="color:#bbb;font-size:13px">Belum ada ulasan yang ditulis.</p>';
+      container.innerHTML = '<p style="color:#bbb;font-size:13px">Belum ada jejak evaluasi yang ditemukan.</p>';
       return;
     }
 
     container.innerHTML = items.reverse().map(u => `
-      <div class="journal-item">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div class="journal-item-title">📖 ${u.judulBuku}</div>
-          <div style="color:var(--gold);font-size:12px">${"★".repeat(u.rating)}${"☆".repeat(5-u.rating)}</div>
+      <div class="journal-item" style="border-left: 4px solid var(--green-main)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <div>
+            <div class="journal-item-title" style="font-size:15px">📖 ${u.judulBuku}</div>
+            <div style="font-size:12px;color:var(--ink-soft);font-weight:600">Oleh: ${u.penulisBuku}</div>
+          </div>
+          <div style="color:var(--gold);font-size:14px;background:#fef3c7;padding:4px 8px;border-radius:8px">
+            ${"★".repeat(u.rating)}${"☆".repeat(5-u.rating)}
+          </div>
         </div>
-        <div class="journal-item-meta">${formatTanggal(u.timestamp)}</div>
-        <div class="journal-item-body">"${u.ulasan}"</div>
+        <div class="journal-item-meta" style="margin-bottom:12px">${formatTanggal(u.timestamp)}</div>
+        
+        <div style="font-size:13px; color:var(--ink); line-height:1.6; margin-bottom:8px">
+          <strong style="color:var(--green-deep)">Kandungan:</strong> ${u.ulasanKandungan}
+        </div>
+        <div style="font-size:13px; color:var(--ink); line-height:1.6; margin-bottom:8px">
+          <strong style="color:#2563eb">Kekuatan:</strong> ${u.kekuatanBuku}
+        </div>
+        <div style="font-size:13px; color:var(--ink); line-height:1.6; margin-bottom:8px">
+          <strong style="color:#dc2626">Kelemahan:</strong> ${u.kelemahanBuku}
+        </div>
+        <div style="font-size:13px; color:var(--ink-soft); font-style:italic; border-top:1px dashed #e2e8f0; padding-top:8px">
+          " ${u.kesanBuku} "
+        </div>
       </div>
     `).join("");
   } catch (e) {
-    container.innerHTML = '<p style="color:#ef4444;font-size:13px">Gagal memuat riwayat ulasan.</p>';
+    container.innerHTML = '<p style="color:#ef4444;font-size:13px">Gagal memuat arsip ulasan.</p>';
   }
 }
