@@ -119,7 +119,7 @@ let state = {
 };
 
 // ─────────────────────────────────────────────
-// UTILITAS
+// UTILITAS (Diperbarui)
 // ─────────────────────────────────────────────
 function showToast(msg, isError = false) {
   const existing = document.querySelector(".toast");
@@ -154,35 +154,34 @@ function getKategori(skor) {
   return "Pembaca Dini";
 }
 
+// FUNGSI KOMUNIKASI SERVER TERPADU
 async function apiCall(action, payload = {}) {
   const url = new URL(CONFIG.API_URL);
   url.searchParams.set("action", action);
-  for (const [k, v] of Object.entries(payload)) url.searchParams.set(k, v);
-
-  // TRICK ANTI-CACHE: Memaksa browser mengunduh data terbaru
+  
+  for (const [k, v] of Object.entries(payload)) {
+    url.searchParams.set(k, v);
+  }
+  
+  // Cache Buster: Memastikan Google tidak memberikan data usang
   url.searchParams.set("t", new Date().getTime());
 
-  // Pastikan redirect: "follow" tetap ada untuk menghindari CORS
   const res = await fetch(url.toString(), { redirect: "follow" });
-  if (!res.ok) throw new Error("Gagal terhubung ke server");
-  return res.json();
-}
-
-async function apiPost(action, payload = {}) {
-  // Mengalihkan semua lalu lintas simpanan ke fungsi GET
-  return await apiCall(action, payload);
-});
-  
-  if (!res.ok) throw new Error("Gagal terhubung ke server");
+  if (!res.ok) throw new Error("Koneksi ditolak oleh server.");
   
   const data = await res.json();
   
-  // SKEPTISME DITERAPKAN: Jika server mengembalikan status error, lempar sebagai kegagalan!
+  // Jika server melempar error, aplikasikan penolakan langsung
   if (data.status === "error") {
     throw new Error(data.message);
   }
   
   return data;
+}
+
+// MENGALIHKAN FUNGSI POST KE DALAM JALUR GET
+async function apiPost(action, payload = {}) {
+  return await apiCall(action, payload);
 }
 
 // ─────────────────────────────────────────────
