@@ -851,26 +851,26 @@ async function loadUlasanHistory() {
       <div class="journal-item" style="border-left: 4px solid var(--green-main)">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
           <div>
-            <div class="journal-item-title" style="font-size:15px">📖 ${u.judulBuku}</div>
-            <div style="font-size:12px;color:var(--ink-soft);font-weight:600">Oleh: ${u.penulisBuku}</div>
+            <div class="journal-item-title" style="font-size:15px">📖 ${u.judulbuku || "-"}</div>
+            <div style="font-size:12px;color:var(--ink-soft);font-weight:600">Oleh: ${u.penulisbuku || "-"}</div>
           </div>
           <div style="color:var(--gold);font-size:14px;background:#fef3c7;padding:4px 8px;border-radius:8px">
-            ${"★".repeat(u.rating)}${"☆".repeat(5-u.rating)}
+            ${"★".repeat(u.rating || 5)}${"☆".repeat(5-(u.rating || 5))}
           </div>
         </div>
         <div class="journal-item-meta" style="margin-bottom:12px">${formatTanggal(u.timestamp)}</div>
         
         <div style="font-size:13px; color:var(--ink); line-height:1.6; margin-bottom:8px">
-          <strong style="color:var(--green-deep)">Kandungan:</strong> ${u.ulasanKandungan}
+          <strong style="color:var(--green-deep)">Kandungan:</strong> ${u.ulasankandungan || "-"}
         </div>
         <div style="font-size:13px; color:var(--ink); line-height:1.6; margin-bottom:8px">
-          <strong style="color:#2563eb">Kekuatan:</strong> ${u.kekuatanBuku}
+          <strong style="color:#2563eb">Kekuatan:</strong> ${u.kekuatanbuku || "-"}
         </div>
         <div style="font-size:13px; color:var(--ink); line-height:1.6; margin-bottom:8px">
-          <strong style="color:#dc2626">Kelemahan:</strong> ${u.kelemahanBuku}
+          <strong style="color:#dc2626">Kelemahan:</strong> ${u.kelemahanbuku || "-"}
         </div>
         <div style="font-size:13px; color:var(--ink-soft); font-style:italic; border-top:1px dashed #e2e8f0; padding-top:8px">
-          " ${u.kesanBuku} "
+          " ${u.kesanbuku || "-"} "
         </div>
       </div>
     `).join("");
