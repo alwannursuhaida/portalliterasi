@@ -739,57 +739,98 @@
     .modal h3 { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
     .modal p { font-size: 14px; color: var(--ink-soft); margin-bottom: 20px; }
 
-    /* ===== PENYEMPURNAAN MOBILE TOTAL (RESPONSIVE) ===== */
+    /* ===== OPTIMASI MOBILE TOTAL (SLIM MODE) ===== */
     @media (max-width: 768px) {
-      /* 1. Layout Utama & Padding */
+      /* 1. Paksa Sidebar Menjadi Header Tipis */
+      .sidebar {
+        width: 100%;
+        min-width: unset;
+        height: auto !important; /* Batalkan tinggi 100vh */
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        border-right: none;
+        border-bottom: 1px solid #eef2ef;
+        background: rgba(255, 255, 255, 0.95); /* Efek Blur Transparan */
+        backdrop-filter: blur(10px);
+        display: block;
+      }
+
+      /* 2. Logo Dibuat Satu Baris dengan Navigasi */
+      .sidebar-brand {
+        padding: 8px 16px;
+        border-bottom: none;
+        justify-content: flex-start;
+        gap: 8px;
+      }
+      .sidebar-brand-icon { width: 28px; height: 28px; border-radius: 8px; }
+      .sidebar-brand-icon i { font-size: 12px; }
+      .sidebar-brand-name { font-size: 14px; font-weight: 800; }
+      .sidebar-brand-sub { display: none; } /* Sembunyikan teks sub-logo di HP */
+
+      /* 3. Navigasi Horizontal (Hanya Satu Baris) */
+      nav {
+        display: flex;
+        flex-direction: row !important; /* Paksa horizontal */
+        overflow-x: auto; /* Aktifkan geser samping */
+        padding: 4px 12px 10px;
+        gap: 6px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; /* Sembunyikan scrollbar di Firefox */
+      }
+      nav::-webkit-scrollbar { display: none; } /* Sembunyikan scrollbar di Chrome/Safari */
+
+      .nav-item {
+        flex: 0 0 auto; /* Jangan biarkan menu mengecil atau membungkus */
+        padding: 6px 14px;
+        font-size: 12px;
+        margin: 0;
+        background: #f1f5f9;
+        border-radius: 100px;
+      }
+      .nav-item i { font-size: 12px; margin-right: 4px; }
+      .nav-section-label { display: none; } /* Buang label "Menu" dan "Admin" */
+
+      /* 4. Sembunyikan Profil di Sidebar HP agar Tidak Menumpuk */
+      .sidebar-user {
+        position: absolute;
+        top: 8px;
+        right: 12px;
+        padding: 0;
+        border: none;
+        background: transparent;
+      }
+      .user-card { display: none; } /* Sembunyikan nama & avatar di header */
+      .btn-logout { 
+        padding: 6px; 
+        border-radius: 50%; 
+        width: 32px; 
+        height: 32px; 
+        background: #fff;
+        border: 1px solid #fecaca;
+      }
+      .btn-logout span { display: none; } /* Sembunyikan teks "Keluar", sisakan ikon */
+
+      /* 5. Konten Utama Mulai Tepat di Bawah Header */
       #view-dashboard { flex-direction: column; }
-      .main { padding: 16px 12px; }
-      .page-title { font-size: 22px; }
-      .page-subtitle { font-size: 13px; margin-bottom: 20px; }
-
-      /* 2. Navigasi Cerdas (Sticky & Swipeable) */
-      .sidebar { width: 100%; min-width: unset; height: auto; position: sticky; top: 0; z-index: 999; border-right: none; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-      .sidebar-brand { padding: 12px 16px; border-bottom: none; display: flex; justify-content: center; align-items: center; }
-      .sidebar-brand-icon { width: 32px; height: 32px; }
-      .sidebar-brand-icon i { font-size: 14px; }
-      .sidebar-brand-name { font-size: 16px; }
-      .sidebar-brand-sub { font-size: 9px; }
+      .main { 
+        padding: 12px; 
+        width: 100%;
+        overflow-x: hidden; 
+      }
       
-      nav { display: flex; flex-direction: row; overflow-x: auto; padding: 0 12px 12px; gap: 8px; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
-      .nav-item { flex: 0 0 auto; white-space: nowrap; padding: 8px 16px; font-size: 13px; margin: 0; justify-content: center; border-radius: 20px; }
-      .nav-section-label { display: none; }
+      /* 6. Kompresi Kartu & Grid */
+      .stats-grid, .quick-grid, .peta-grid, .book-grid, .form-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .card { padding: 16px; border-radius: 12px; }
+      .page-title { font-size: 20px; letter-spacing: -0.5px; }
       
-      /* Profil & Logout Kompak di Layar Kecil */
-      .sidebar-user { padding: 8px 16px; display: flex; justify-content: space-between; align-items: center; border-top: none; background: #f8faf9; border-bottom: 1px solid #eef2ef; }
-      .user-card { padding: 0; margin: 0; background: transparent; }
-      .user-avatar { width: 28px; height: 28px; font-size: 11px; }
-      .btn-logout { width: auto; padding: 6px 12px; font-size: 11px; }
-
-      /* 3. Restrukturisasi Grid & Kartu (Hukum 1 Kolom) */
-      .stats-grid, .quick-grid, .book-grid, .peta-grid, .form-row, .bulk-grid { grid-template-columns: 1fr; gap: 12px; }
-      .card, .stat-card, .book-card, .profile-card, .jurnal-form, .modal, #admin-tab-input { padding: 16px; }
-      .layout-ganda { flex-direction: column; gap: 20px; }
-      .layout-samping { width: 100%; }
-      #jumat-list-container { max-height: 240px !important; }
-
-      /* 4. Penyempurnaan Halaman Login */
-      #view-login { padding: 16px; }
-      .login-card { margin: 0 auto; padding: 32px 20px; border-radius: 20px; }
-      .login-logo { width: 56px; height: 56px; }
-
-      /* 5. Keamanan Tabel (Mencegah Layar Melebar) */
-      .data-table { font-size: 11px; }
-      .data-table th, .data-table td { padding: 8px 10px; white-space: nowrap; }
-      .tab-bar { overflow-x: auto; padding-bottom: 8px; white-space: nowrap; -webkit-overflow-scrolling: touch; }
-      .tab-btn { flex-shrink: 0; }
-
-      /* 6. Penyesuaian Asesmen & Laporan */
-      .result-score { font-size: 48px; }
-      .result-label { font-size: 20px; }
-      .option-btn { padding: 12px 14px; font-size: 13px; }
-      .filter-bar { flex-direction: column; align-items: stretch; }
-      .filter-select, .btn-refresh { width: 100%; justify-content: center; }
-      #page-laporan > div:nth-of-type(1) { grid-template-columns: 1fr; }
+      /* 7. Perbaikan Modal & Form */
+      .modal { width: 90%; padding: 20px; border-radius: 16px; }
+      #jumat-list-container { max-height: 200px !important; }
+      .layout-ganda { flex-direction: column; gap: 16px; }
     }
   </style>
 </head>
