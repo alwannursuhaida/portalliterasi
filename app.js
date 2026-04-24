@@ -8,7 +8,7 @@
 // KONFIGURASI — Ganti URL setelah deploy Apps Script
 // ─────────────────────────────────────────────
 const CONFIG = {
-  API_URL: "https://script.google.com/macros/s/AKfycbwfstKF05KYxF54c1oGRSu3Q_OLjY0GD_hP5wicJKmcY9uG1rkVV9HIw7gcqeEkiQGg/exec",
+  API_URL: "https://script.google.com/macros/s/AKfycbz0CcoAw0DpxtWcEE_-kQUMAbwnPo5tgGU4ahujOD9ju74Q5NsEsX3TM_6RNWVkfZMW/exec",
   ADMIN_PASSWORD: "albanna2025",   // Ganti sesuai kebutuhan
   MIN_KATA_JURNAL: 50,
   TOTAL_SOAL: 12,
