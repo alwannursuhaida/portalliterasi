@@ -159,7 +159,11 @@ async function apiCall(action, payload = {}) {
   url.searchParams.set("action", action);
   for (const [k, v] of Object.entries(payload)) url.searchParams.set(k, v);
 
-  const res = await fetch(url.toString());
+  // TRICK ANTI-CACHE: Memaksa browser mengunduh data terbaru
+  url.searchParams.set("t", new Date().getTime());
+
+  // Pastikan redirect: "follow" tetap ada untuk menghindari CORS
+  const res = await fetch(url.toString(), { redirect: "follow" });
   if (!res.ok) throw new Error("Gagal terhubung ke server");
   return res.json();
 }
