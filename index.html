@@ -2058,14 +2058,80 @@
   </main>
 </div>
 
+<!-- Mobile nav helpers -->
+<script>
+  function showMobileMenu() {
+    document.getElementById('mobile-menu-drawer').style.display = 'block';
+  }
+  function hideMobileMenu() {
+    document.getElementById('mobile-menu-drawer').style.display = 'none';
+  }
+
+  // Patch switchPage to also update mobile nav bar active state
+  document.addEventListener('DOMContentLoaded', function() {
+    const origSwitchPage = window.switchPage;
+    if (typeof origSwitchPage === 'function') {
+      window.switchPage = function(page) {
+        origSwitchPage(page);
+        syncMobileNav(page);
+      };
+    }
+
+    // Sync after login: update mobile drawer user info
+    const origHandleLogin = window.handleLogin;
+    if (typeof origHandleLogin === 'function') {
+      window.handleLogin = function() {
+        origHandleLogin();
+        setTimeout(syncMobileUserInfo, 300);
+      };
+    }
+  });
+
+  function syncMobileNav(page) {
+    const mainPages = ['beranda','asesmen','jurnal','ulasan'];
+    document.querySelectorAll('.mobile-nav-item[data-page]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.page === page && mainPages.includes(page));
+    });
+    // Load AIM data when entering AIM page
+    if (page === 'aim') loadAIM();
+  }
+
+  function syncMobileUserInfo() {
+    const name = document.getElementById('sidebar-name')?.textContent || '';
+    const kelas = document.getElementById('sidebar-class')?.textContent || '';
+    const avatar = document.getElementById('sidebar-avatar')?.textContent || '?';
+    const el = (id, v) => { const e = document.getElementById(id); if(e) e.textContent = v; };
+    el('mobile-drawer-name', name);
+    el('mobile-drawer-class', kelas);
+    el('mobile-drawer-avatar', avatar);
+    // Show admin button if admin panel visible
+    const adminWrap = document.getElementById('nav-admin-wrap');
+    const mobileAdminBtn = document.getElementById('mobile-admin-btn');
+    if (adminWrap && mobileAdminBtn) {
+      mobileAdminBtn.style.display = adminWrap.style.display === 'none' ? 'none' : 'flex';
+    }
+  }
+</script>
+
+<!-- App Script -->
+<script src="app.js"></script>
+
 <!-- AIM Module -->
 <script>
 // ============================================================
-// AIM CONFIG — GANTI URL API DI SINI
-// Pastikan GAS sudah di-deploy ulang setelah menambahkan
-// handler getAIMEdisi dan getAIMRedaksi
+// AIM CONFIG
+// Menggunakan CONFIG.API_URL yang sama dari app.js
 // ============================================================
-const AIM_API = window.API_URL || ""; // akan menggunakan API_URL yang sama dari app.js
+function aimApiUrl(action) {
+  // CONFIG didefinisikan di app.js — pastikan app.js sudah dimuat
+  const base = (typeof CONFIG !== "undefined" && CONFIG.API_URL)
+    ? CONFIG.API_URL
+    : "";
+  if (!base) {
+    console.error("AIM: CONFIG.API_URL tidak ditemukan. Pastikan app.js sudah dimuat.");
+  }
+  return base + "?action=" + action;
+}
 
 // ---- Role badge mapping ----
 const ROLE_CLASS = {
@@ -2093,8 +2159,7 @@ async function loadAIM() {
 async function loadAIMEdisi() {
   const grid = document.getElementById("aim-editions-grid");
   try {
-    const url = (window.API_URL || AIM_API) + "?action=getAIMEdisi";
-    const res  = await fetch(url);
+    const res  = await fetch(aimApiUrl("getAIMEdisi"));
     const data = await res.json();
     if (data.status !== "ok" || !data.edisi?.length) {
       grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:32px;color:#bbb;">
@@ -2157,8 +2222,7 @@ function buildEdisiCard(e) {
 async function loadAIMRedaksi() {
   const grid = document.getElementById("aim-redaksi-grid");
   try {
-    const url = (window.API_URL || AIM_API) + "?action=getAIMRedaksi";
-    const res  = await fetch(url);
+    const res  = await fetch(aimApiUrl("getAIMRedaksi"));
     const data = await res.json();
     if (data.status !== "ok" || !data.redaksi?.length) {
       grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:32px;color:#bbb;">
@@ -2349,62 +2413,6 @@ document.addEventListener("visibilitychange", () => {
 });
 </script>
 
-<!-- Mobile nav helpers -->
-<script>
-  function showMobileMenu() {
-    document.getElementById('mobile-menu-drawer').style.display = 'block';
-  }
-  function hideMobileMenu() {
-    document.getElementById('mobile-menu-drawer').style.display = 'none';
-  }
 
-  // Patch switchPage to also update mobile nav bar active state
-  document.addEventListener('DOMContentLoaded', function() {
-    const origSwitchPage = window.switchPage;
-    if (typeof origSwitchPage === 'function') {
-      window.switchPage = function(page) {
-        origSwitchPage(page);
-        syncMobileNav(page);
-      };
-    }
-
-    // Sync after login: update mobile drawer user info
-    const origHandleLogin = window.handleLogin;
-    if (typeof origHandleLogin === 'function') {
-      window.handleLogin = function() {
-        origHandleLogin();
-        setTimeout(syncMobileUserInfo, 300);
-      };
-    }
-  });
-
-  function syncMobileNav(page) {
-    const mainPages = ['beranda','asesmen','jurnal','ulasan'];
-    document.querySelectorAll('.mobile-nav-item[data-page]').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.page === page && mainPages.includes(page));
-    });
-    // Load AIM data when entering AIM page
-    if (page === 'aim') loadAIM();
-  }
-
-  function syncMobileUserInfo() {
-    const name = document.getElementById('sidebar-name')?.textContent || '';
-    const kelas = document.getElementById('sidebar-class')?.textContent || '';
-    const avatar = document.getElementById('sidebar-avatar')?.textContent || '?';
-    const el = (id, v) => { const e = document.getElementById(id); if(e) e.textContent = v; };
-    el('mobile-drawer-name', name);
-    el('mobile-drawer-class', kelas);
-    el('mobile-drawer-avatar', avatar);
-    // Show admin button if admin panel visible
-    const adminWrap = document.getElementById('nav-admin-wrap');
-    const mobileAdminBtn = document.getElementById('mobile-admin-btn');
-    if (adminWrap && mobileAdminBtn) {
-      mobileAdminBtn.style.display = adminWrap.style.display === 'none' ? 'none' : 'flex';
-    }
-  }
-</script>
-
-<!-- App Script -->
-<script src="app.js"></script>
 </body>
 </html>
