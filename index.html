@@ -937,6 +937,347 @@
       }
     }
 
+    /* ===== AIM — ALBANNA INTELLECTUAL MAGAZINE ===== */
+
+    /* ---- Flip Book Modal ---- */
+    #aim-flipbook-overlay {
+      position: fixed; inset: 0;
+      background: rgba(10,10,20,0.92);
+      backdrop-filter: blur(6px);
+      z-index: 9000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    #aim-flipbook-overlay.open { display: flex; }
+    .fb-close-btn {
+      position: absolute; top: 16px; right: 20px;
+      background: rgba(255,255,255,0.12); border: none;
+      color: #fff; width: 38px; height: 38px; border-radius: 50%;
+      font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
+      z-index: 9010;
+    }
+    .fb-close-btn:hover { background: rgba(255,255,255,0.22); }
+    .fb-title-bar {
+      color: #fff; font-size: 14px; font-weight: 700;
+      margin-bottom: 14px; letter-spacing: 0.3px; text-align: center;
+    }
+    .fb-title-bar span { color: var(--gold); }
+
+    /* Book container */
+    .fb-book-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      width: 100%;
+      max-width: 900px;
+    }
+    .fb-nav-btn {
+      background: rgba(255,255,255,0.10);
+      border: none; color: #fff;
+      width: 44px; height: 44px; border-radius: 50%;
+      font-size: 18px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.2s, transform 0.15s;
+      z-index: 10;
+    }
+    .fb-nav-btn:hover { background: rgba(255,255,255,0.22); transform: scale(1.08); }
+    .fb-nav-btn:disabled { opacity: 0.2; cursor: not-allowed; transform: none; }
+
+    /* The book itself */
+    .fb-book {
+      position: relative;
+      display: flex;
+      margin: 0 12px;
+      perspective: 2000px;
+    }
+    /* Each page panel */
+    .fb-page {
+      width: 320px;
+      max-width: 42vw;
+      aspect-ratio: 3/4;
+      position: relative;
+      overflow: hidden;
+      border-radius: 2px;
+      box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+      background: #1a1a2e;
+      flex-shrink: 0;
+    }
+    .fb-page-left  { border-radius: 4px 0 0 4px; box-shadow: -2px 0 12px rgba(0,0,0,0.4); }
+    .fb-page-right { border-radius: 0 4px 4px 0; box-shadow:  2px 0 12px rgba(0,0,0,0.4); }
+    .fb-page img {
+      width: 100%; height: 100%;
+      object-fit: cover; display: block;
+      pointer-events: none; user-select: none;
+    }
+    /* Spine shadow between pages */
+    .fb-spine {
+      width: 6px;
+      align-self: stretch;
+      background: linear-gradient(to right, rgba(0,0,0,0.45), rgba(0,0,0,0.1));
+      flex-shrink: 0;
+    }
+    /* Page turn animation */
+    .fb-page.turning {
+      animation: fbTurn 0.45s cubic-bezier(0.4,0,0.2,1) forwards;
+      transform-origin: left center;
+    }
+    @keyframes fbTurn {
+      0%   { transform: rotateY(0deg); opacity: 1; }
+      50%  { transform: rotateY(-90deg); opacity: 0.3; }
+      100% { transform: rotateY(0deg); opacity: 1; }
+    }
+    /* Page number & counter */
+    .fb-page-info {
+      color: rgba(255,255,255,0.45);
+      font-size: 12px; font-weight: 600;
+      margin-top: 12px; text-align: center;
+      letter-spacing: 0.5px;
+    }
+    /* Cover-only single page mode */
+    .fb-single .fb-page { max-width: 60vw; }
+    .fb-single .fb-spine { display: none; }
+
+    /* Placeholder page */
+    .fb-placeholder {
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 12px;
+      color: rgba(255,255,255,0.2);
+    }
+    .fb-placeholder i { font-size: 40px; }
+    .fb-placeholder p { font-size: 12px; font-weight: 600; letter-spacing: 0.5px; }
+
+    /* PDF button inside viewer */
+    .fb-pdf-btn {
+      margin-top: 14px;
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(245,166,35,0.15);
+      border: 1px solid rgba(245,166,35,0.4);
+      color: var(--gold);
+      border-radius: 20px; padding: 8px 20px;
+      font-family: inherit; font-size: 12px; font-weight: 700;
+      cursor: pointer; text-decoration: none;
+      transition: background 0.2s;
+    }
+    .fb-pdf-btn:hover { background: rgba(245,166,35,0.28); }
+
+    /* ---- AIM Hero & Layout ---- */
+    .aim-hero {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+      border-radius: var(--radius);
+      padding: 36px 32px;
+      margin-bottom: 32px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+    .aim-hero::before {
+      content: 'AIM';
+      position: absolute;
+      right: -10px; top: -20px;
+      font-size: 160px;
+      font-weight: 900;
+      color: rgba(255,255,255,0.04);
+      font-family: 'Lora', serif;
+      line-height: 1;
+      pointer-events: none;
+      user-select: none;
+    }
+    .aim-hero-logo {
+      width: 72px; height: 72px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.10);
+      border: 1.5px solid rgba(255,255,255,0.15);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .aim-hero-logo i { font-size: 30px; color: #f5a623; }
+    .aim-hero-text h2 {
+      font-size: 26px; font-weight: 900;
+      color: #fff;
+      letter-spacing: -0.5px;
+      margin-bottom: 4px;
+    }
+    .aim-hero-text .aim-tagline {
+      font-size: 13px;
+      color: rgba(255,255,255,0.55);
+      font-weight: 500;
+      font-family: 'Lora', serif;
+      font-style: italic;
+      margin-bottom: 10px;
+    }
+    .aim-hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(245,166,35,0.18);
+      border: 1px solid rgba(245,166,35,0.35);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 11px; font-weight: 700;
+      color: #f5a623;
+      text-transform: uppercase; letter-spacing: 0.8px;
+    }
+
+    /* Edisi section */
+    .aim-section-title {
+      font-size: 18px; font-weight: 800;
+      color: var(--ink);
+      margin-bottom: 16px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .aim-section-title i { color: var(--gold); }
+
+    .aim-editions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 18px;
+      margin-bottom: 40px;
+    }
+    .aim-edition-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      border: 1.5px solid #eef2ef;
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+      display: flex; flex-direction: column;
+    }
+    .aim-edition-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+    .aim-edition-cover {
+      width: 100%;
+      aspect-ratio: 3/4;
+      object-fit: cover;
+      background: linear-gradient(135deg, #1a1a2e, #0f3460);
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .aim-edition-cover img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .aim-edition-cover-placeholder {
+      width: 100%;
+      aspect-ratio: 3/4;
+      background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 10px;
+    }
+    .aim-edition-cover-placeholder i { font-size: 36px; color: rgba(255,255,255,0.3); }
+    .aim-edition-cover-placeholder span {
+      font-size: 11px; color: rgba(255,255,255,0.25);
+      font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    }
+    .aim-edition-info {
+      padding: 14px 16px;
+      flex: 1;
+    }
+    .aim-edition-vol {
+      font-size: 10px; font-weight: 800;
+      color: var(--gold); letter-spacing: 1px;
+      text-transform: uppercase; margin-bottom: 4px;
+    }
+    .aim-edition-title {
+      font-size: 14px; font-weight: 800;
+      color: var(--ink); line-height: 1.3; margin-bottom: 4px;
+    }
+    .aim-edition-date {
+      font-size: 11px; color: var(--ink-soft); font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .aim-read-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: linear-gradient(135deg, #1a1a2e, #0f3460);
+      color: #fff;
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-size: 12px; font-weight: 700;
+      border: none; cursor: pointer;
+      text-decoration: none;
+      transition: opacity 0.2s;
+      font-family: inherit;
+    }
+    .aim-read-btn:hover { opacity: 0.85; }
+
+    /* Redaksi section */
+    .aim-redaksi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    .aim-member-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 20px 16px;
+      text-align: center;
+      box-shadow: var(--shadow);
+      border: 1.5px solid #eef2ef;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .aim-member-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+    .aim-member-photo {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin: 0 auto 12px;
+      display: block;
+      border: 3px solid var(--green-soft);
+    }
+    .aim-member-avatar {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      margin: 0 auto 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; font-weight: 800;
+      color: #fff;
+      background: linear-gradient(135deg, #1a1a2e, #0f3460);
+      border: 3px solid #e2e8f0;
+      font-family: 'Lora', serif;
+    }
+    .aim-member-name {
+      font-size: 13px; font-weight: 800;
+      color: var(--ink); line-height: 1.3; margin-bottom: 4px;
+    }
+    .aim-member-role {
+      display: inline-block;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+    }
+    /* Role color variants */
+    .role-pimred  { background: #fef3c7; color: #92400e; }
+    .role-editor  { background: #eff6ff; color: #1e40af; }
+    .role-reporter{ background: #f0fdf4; color: #166534; }
+    .role-foto    { background: #fdf4ff; color: #7e22ce; }
+    .role-desain  { background: #fff1f2; color: #9f1239; }
+    .role-default { background: #f1f5f9; color: #475569; }
+
+    @media (max-width: 768px) {
+      .aim-hero { flex-direction: column; align-items: flex-start; gap: 16px; padding: 24px 18px; }
+      .aim-hero::before { font-size: 100px; }
+      .aim-hero-text h2 { font-size: 20px; }
+      .aim-editions-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .aim-redaksi-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    }
+    @media (max-width: 380px) {
+      .aim-editions-grid { grid-template-columns: 1fr; }
+      .aim-redaksi-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
     /* Extra small phones */
     @media (max-width: 380px) {
       .stats-grid { grid-template-columns: 1fr; }
@@ -1058,6 +1399,9 @@
       <button class="nav-item" data-page="laporan" onclick="switchPage('laporan')">
         <i class="fas fa-chart-pie"></i> Laporan & Analitik
       </button>
+      <button class="nav-item" data-page="aim" onclick="switchPage('aim')">
+        <i class="fas fa-newspaper"></i> AIM · Majalah
+      </button>
       <div id="nav-admin-wrap" style="display:none">
         <div class="nav-section-label">Admin</div>
         <button class="nav-item" data-page="admin" onclick="switchPage('admin')">
@@ -1112,6 +1456,9 @@
         </button>
         <button class="quick-card" onclick="hideMobileMenu();switchPage('laporan')" style="padding:14px 10px;">
           <i class="fas fa-chart-pie"></i><span>Laporan</span>
+        </button>
+        <button class="quick-card" onclick="hideMobileMenu();switchPage('aim')" style="padding:14px 10px;">
+          <i class="fas fa-newspaper"></i><span>AIM</span>
         </button>
         <button id="mobile-admin-btn" class="quick-card" onclick="hideMobileMenu();switchPage('admin')" style="padding:14px 10px; display:none;">
           <i class="fas fa-database"></i><span>Panel Admin</span>
@@ -1636,8 +1983,371 @@
         </div>
       </div>
     </section>
+    <!-- ==================== AIM — ALBANNA INTELLECTUAL MAGAZINE ==================== -->
+    <section id="page-aim" class="page-section">
+
+      <!-- Hero -->
+      <div class="aim-hero">
+        <div class="aim-hero-logo">
+          <i class="fas fa-newspaper"></i>
+        </div>
+        <div class="aim-hero-text">
+          <h2>Albanna Intellectual Magazine</h2>
+          <p class="aim-tagline">"Menulis adalah cara terbaik untuk berpikir."</p>
+          <span class="aim-hero-badge"><i class="fas fa-pen-nib"></i> Grup Jurnalistik SMP Albanna</span>
+        </div>
+      </div>
+
+      <!-- Edisi Majalah -->
+      <p class="aim-section-title"><i class="fas fa-book-open"></i> Edisi Majalah</p>
+      <div class="aim-editions-grid" id="aim-editions-grid">
+        <div style="grid-column:1/-1;text-align:center;padding:32px;color:#bbb;">
+          <i class="fas fa-circle-notch fa-spin" style="font-size:24px;margin-bottom:12px;display:block;"></i>
+          Memuat edisi majalah...
+        </div>
+      </div>
+
+      <!-- Susunan Redaksi -->
+      <p class="aim-section-title" style="margin-top:8px;"><i class="fas fa-users"></i> Susunan Redaksi</p>
+      <div class="aim-redaksi-grid" id="aim-redaksi-grid">
+        <div style="grid-column:1/-1;text-align:center;padding:32px;color:#bbb;">
+          <i class="fas fa-circle-notch fa-spin" style="font-size:24px;margin-bottom:12px;display:block;"></i>
+          Memuat data redaksi...
+        </div>
+      </div>
+
+      <!-- Footer AIM -->
+      <div style="text-align:center; padding:24px 0 8px; border-top:1px solid #eef2ef;">
+        <p style="font-size:12px; color:#bbb; font-family:'Lora',serif; font-style:italic;">
+          Albanna Intellectual Magazine · SMP Albanna · Denpasar
+        </p>
+      </div>
+
+    </section>
+    <!-- ==================== END AIM ==================== -->
+
+    <!-- ========== FLIP BOOK OVERLAY ========== -->
+    <div id="aim-flipbook-overlay">
+      <button class="fb-close-btn" onclick="closeFlipBook()" title="Tutup">
+        <i class="fas fa-xmark"></i>
+      </button>
+      <div class="fb-title-bar" id="fb-title-bar">
+        <span id="fb-title-text">Majalah AIM</span>
+      </div>
+
+      <div class="fb-book-wrap" id="fb-book-wrap">
+        <button class="fb-nav-btn" id="fb-prev" onclick="fbPrev()" title="Halaman Sebelumnya">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+
+        <div class="fb-book" id="fb-book">
+          <!-- Pages injected by JS -->
+        </div>
+
+        <button class="fb-nav-btn" id="fb-next" onclick="fbNext()" title="Halaman Berikutnya">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+
+      <div class="fb-page-info" id="fb-page-info">Halaman 1</div>
+      <a class="fb-pdf-btn" id="fb-pdf-link" href="#" target="_blank" rel="noopener">
+        <i class="fas fa-file-pdf"></i> Buka PDF Lengkap
+      </a>
+    </div>
+
   </main>
 </div>
+
+<!-- AIM Module -->
+<script>
+// ============================================================
+// AIM CONFIG — GANTI URL API DI SINI
+// Pastikan GAS sudah di-deploy ulang setelah menambahkan
+// handler getAIMEdisi dan getAIMRedaksi
+// ============================================================
+const AIM_API = window.API_URL || ""; // akan menggunakan API_URL yang sama dari app.js
+
+// ---- Role badge mapping ----
+const ROLE_CLASS = {
+  "pemimpin redaksi": "role-pimred",
+  "pimred"          : "role-pimred",
+  "editor"          : "role-editor",
+  "redaktur"        : "role-editor",
+  "reporter"        : "role-reporter",
+  "penulis"         : "role-reporter",
+  "fotografer"      : "role-foto",
+  "foto"            : "role-foto",
+  "desainer"        : "role-desain",
+  "layouter"        : "role-desain",
+};
+function getRoleClass(jabatan) {
+  const key = (jabatan||"").toLowerCase().trim();
+  return ROLE_CLASS[key] || "role-default";
+}
+
+// ---- Load AIM data from Sheets ----
+async function loadAIM() {
+  await Promise.all([loadAIMEdisi(), loadAIMRedaksi()]);
+}
+
+async function loadAIMEdisi() {
+  const grid = document.getElementById("aim-editions-grid");
+  try {
+    const url = (window.API_URL || AIM_API) + "?action=getAIMEdisi";
+    const res  = await fetch(url);
+    const data = await res.json();
+    if (data.status !== "ok" || !data.edisi?.length) {
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:32px;color:#bbb;">
+        <i class="fas fa-inbox" style="font-size:28px;display:block;margin-bottom:10px;"></i>
+        Belum ada edisi yang dipublikasikan.
+      </div>`;
+      return;
+    }
+    grid.innerHTML = data.edisi.map(e => buildEdisiCard(e)).join("");
+  } catch(err) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:24px;color:#ef4444;font-size:13px;">
+      <i class="fas fa-triangle-exclamation" style="margin-right:6px;"></i>
+      Gagal memuat edisi. Periksa URL API dan koneksi internet.
+    </div>`;
+  }
+}
+
+function buildEdisiCard(e) {
+  const terbit  = (e.status||"").toLowerCase() !== "draft";
+  const hasCover = e.urlcover && e.urlcover.trim() !== "";
+  const hasPDF   = e.urlpdf   && e.urlpdf.trim()   !== "";
+  const hasPages = e.urlhalaman && e.urlhalaman.trim() !== "";
+
+  const coverHTML = hasCover
+    ? `<img src="${e.urlcover}" alt="${e.judul||''}" style="width:100%;height:100%;object-fit:cover;display:block;"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+    : "";
+  const placeholderHTML = `
+    <div class="aim-edition-cover-placeholder" ${hasCover ? 'style="display:none"' : ""}>
+      <i class="fas fa-${terbit ? "book" : "clock"}"></i>
+      <span>${terbit ? (e.vol||"Edisi") : "Segera Hadir"}</span>
+    </div>`;
+
+  const canOpen = terbit && (hasPDF || hasPages);
+  const pageList = hasPages ? e.urlhalaman.split(",").map(u=>u.trim()).filter(Boolean) : [];
+
+  const btnHTML = !terbit
+    ? `<span class="aim-read-btn" style="background:#d1d5db;cursor:default;"><i class="fas fa-lock"></i> Belum Terbit</span>`
+    : `<button class="aim-read-btn" onclick='openFlipBook(${JSON.stringify({
+        judul: e.judul||"Majalah AIM",
+        vol: e.vol||"",
+        urlpdf: e.urlpdf||"",
+        halaman: pageList
+      })})'><i class="fas fa-book-open-reader"></i> Baca Majalah</button>`;
+
+  return `
+    <div class="aim-edition-card" ${!terbit ? 'style="opacity:0.6;pointer-events:none;"' : ""}>
+      <div class="aim-edition-cover" style="aspect-ratio:3/4;overflow:hidden;background:#1a1a2e;display:flex;align-items:center;justify-content:center;">
+        ${coverHTML}${placeholderHTML}
+      </div>
+      <div class="aim-edition-info">
+        <div class="aim-edition-vol">${e.vol||""}</div>
+        <div class="aim-edition-title">${e.judul||"Tanpa Judul"}</div>
+        <div class="aim-edition-date"><i class="fas fa-calendar-alt" style="margin-right:4px;color:var(--gold)"></i>${e.tanggal||"-"}</div>
+        ${btnHTML}
+      </div>
+    </div>`;
+}
+
+async function loadAIMRedaksi() {
+  const grid = document.getElementById("aim-redaksi-grid");
+  try {
+    const url = (window.API_URL || AIM_API) + "?action=getAIMRedaksi";
+    const res  = await fetch(url);
+    const data = await res.json();
+    if (data.status !== "ok" || !data.redaksi?.length) {
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:32px;color:#bbb;">
+        <i class="fas fa-users-slash" style="font-size:28px;display:block;margin-bottom:10px;"></i>
+        Data redaksi belum tersedia.
+      </div>`;
+      return;
+    }
+    grid.innerHTML = data.redaksi.map(r => buildMemberCard(r)).join("");
+  } catch(err) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:24px;color:#ef4444;font-size:13px;">
+      <i class="fas fa-triangle-exclamation" style="margin-right:6px;"></i>
+      Gagal memuat data redaksi.
+    </div>`;
+  }
+}
+
+function buildMemberCard(r) {
+  const inisial = (r.nama||"?").trim().split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
+  const roleClass = getRoleClass(r.jabatan);
+  const fotoHTML = (r.urlfoto && r.urlfoto.trim())
+    ? `<img class="aim-member-photo" src="${r.urlfoto}" alt="${r.nama||''}"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+       <div class="aim-member-avatar" style="display:none">${inisial}</div>`
+    : `<div class="aim-member-avatar">${inisial}</div>`;
+  return `
+    <div class="aim-member-card">
+      ${fotoHTML}
+      <div class="aim-member-name">${r.nama||"Anggota"}</div>
+      <span class="aim-member-role ${roleClass}">${r.jabatan||"Redaksi"}</span>
+    </div>`;
+}
+
+// ---- Flip Book Engine ----
+let fbPages   = [];
+let fbCurrent = 0; // index of LEFT page (always even)
+let fbPdfUrl  = "";
+let fbIsMobile = false;
+
+function openFlipBook(data) {
+  fbPages  = data.halaman || [];
+  fbPdfUrl = data.urlpdf  || "";
+  fbCurrent = 0;
+
+  // Mobile: single page mode
+  fbIsMobile = window.innerWidth < 640;
+
+  document.getElementById("fb-title-text").textContent =
+    data.vol ? `${data.vol} — ${data.judul}` : data.judul;
+
+  const pdfLink = document.getElementById("fb-pdf-link");
+  if (fbPdfUrl) {
+    pdfLink.href = fbPdfUrl;
+    pdfLink.style.display = "inline-flex";
+  } else {
+    pdfLink.style.display = "none";
+  }
+
+  renderFlipBook();
+  document.getElementById("aim-flipbook-overlay").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function closeFlipBook() {
+  document.getElementById("aim-flipbook-overlay").classList.remove("open");
+  document.body.style.overflow = "";
+}
+
+function renderFlipBook() {
+  const book    = document.getElementById("fb-book");
+  const info    = document.getElementById("fb-page-info");
+  const prevBtn = document.getElementById("fb-prev");
+  const nextBtn = document.getElementById("fb-next");
+  const total   = fbPages.length;
+
+  if (total === 0) {
+    // No page images — show PDF notice
+    book.innerHTML = `
+      <div class="fb-page fb-single" style="width:280px;max-width:72vw;aspect-ratio:3/4;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1a1a2e;border-radius:8px;">
+        <div class="fb-placeholder">
+          <i class="fas fa-file-pdf" style="color:rgba(245,166,35,0.4)"></i>
+          <p>Halaman gambar belum ditambahkan.<br>Silakan buka PDF untuk membaca.</p>
+        </div>
+      </div>`;
+    info.textContent = "";
+    prevBtn.disabled = true;
+    nextBtn.disabled = true;
+    return;
+  }
+
+  if (fbIsMobile) {
+    // Single page mode
+    book.className = "fb-book fb-single";
+    const pg = fbPages[fbCurrent] || null;
+    book.innerHTML = `
+      <div class="fb-page" style="width:72vw;max-width:320px;">
+        ${pg ? `<img src="${pg}" alt="Halaman ${fbCurrent+1}" loading="lazy">`
+             : `<div class="fb-placeholder"><i class="fas fa-file"></i><p>Halaman ${fbCurrent+1}</p></div>`}
+      </div>`;
+    info.textContent = `Halaman ${fbCurrent + 1} dari ${total}`;
+    prevBtn.disabled = fbCurrent === 0;
+    nextBtn.disabled = fbCurrent >= total - 1;
+  } else {
+    // Double-page spread
+    book.className = "fb-book";
+    const leftIdx  = fbCurrent;
+    const rightIdx = fbCurrent + 1;
+    const leftPg   = fbPages[leftIdx]  || null;
+    const rightPg  = fbPages[rightIdx] || null;
+
+    const leftHTML = leftPg
+      ? `<img src="${leftPg}"  alt="Halaman ${leftIdx+1}" loading="lazy">`
+      : `<div class="fb-placeholder"><i class="fas fa-file"></i><p>Halaman ${leftIdx+1}</p></div>`;
+    const rightHTML = rightPg
+      ? `<img src="${rightPg}" alt="Halaman ${rightIdx+1}" loading="lazy">`
+      : `<div class="fb-placeholder" style="opacity:0.3;"></div>`;
+
+    book.innerHTML = `
+      <div class="fb-page fb-page-left"  id="fb-left">${leftHTML}</div>
+      <div class="fb-spine"></div>
+      <div class="fb-page fb-page-right" id="fb-right">${rightHTML}</div>`;
+
+    const showing = rightIdx < total ? `${leftIdx+1}–${rightIdx+1}` : `${leftIdx+1}`;
+    info.textContent = `Halaman ${showing} dari ${total}`;
+    prevBtn.disabled = fbCurrent === 0;
+    nextBtn.disabled = rightIdx >= total - 1 && !rightPg;
+  }
+}
+
+function fbNext() {
+  const step = fbIsMobile ? 1 : 2;
+  const max  = fbIsMobile ? fbPages.length - 1 : fbPages.length - 2;
+  if (fbCurrent < max) {
+    animateTurn("next");
+    fbCurrent = Math.min(fbCurrent + step, fbIsMobile ? fbPages.length - 1 : fbPages.length - (fbPages.length % 2 === 0 ? 2 : 1));
+    setTimeout(renderFlipBook, 220);
+  }
+}
+
+function fbPrev() {
+  const step = fbIsMobile ? 1 : 2;
+  if (fbCurrent > 0) {
+    animateTurn("prev");
+    fbCurrent = Math.max(0, fbCurrent - step);
+    setTimeout(renderFlipBook, 220);
+  }
+}
+
+function animateTurn(dir) {
+  const target = dir === "next"
+    ? document.getElementById("fb-right")
+    : document.getElementById("fb-left");
+  if (target) {
+    target.classList.add("turning");
+    setTimeout(() => target.classList.remove("turning"), 450);
+  }
+}
+
+// Keyboard navigation
+document.addEventListener("keydown", e => {
+  const overlay = document.getElementById("aim-flipbook-overlay");
+  if (!overlay.classList.contains("open")) return;
+  if (e.key === "ArrowRight") fbNext();
+  if (e.key === "ArrowLeft")  fbPrev();
+  if (e.key === "Escape")     closeFlipBook();
+});
+
+// Touch swipe support
+(function() {
+  let tx = 0;
+  const overlay = () => document.getElementById("aim-flipbook-overlay");
+  document.addEventListener("touchstart", e => {
+    if (!overlay().classList.contains("open")) return;
+    tx = e.touches[0].clientX;
+  }, {passive:true});
+  document.addEventListener("touchend", e => {
+    if (!overlay().classList.contains("open")) return;
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 50) dx < 0 ? fbNext() : fbPrev();
+  }, {passive:true});
+})();
+
+// Reload when page becomes visible
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && document.getElementById("page-aim")?.classList.contains("active")) {
+    loadAIM();
+  }
+});
+</script>
 
 <!-- Mobile nav helpers -->
 <script>
@@ -1673,6 +2383,8 @@
     document.querySelectorAll('.mobile-nav-item[data-page]').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.page === page && mainPages.includes(page));
     });
+    // Load AIM data when entering AIM page
+    if (page === 'aim') loadAIM();
   }
 
   function syncMobileUserInfo() {
