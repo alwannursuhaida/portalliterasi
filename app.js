@@ -8,7 +8,7 @@
 // ─────────────────────────────────────────────
 const CONFIG = {
   // PASTIKAN URL INI ADALAH URL DEPLOYMENT TERBARU ANDA
-  API_URL: "https://script.google.com/macros/s/AKfycbwMBlOfGu13CAgRn2V3EkSeUnjg-UNUBrsTYPk1EZYbDFTxY5CR3ssB9Ev7o4I2fbiX/exec",
+  API_URL: "https://script.google.com/macros/s/AKfycbzM-i9bGjfgwWqmVdlu4XwAHmAFGigGSVHWyohih1M2PJxsUZQf18NMbG241mOa-0kT/exec",
   ADMIN_PASSWORD: "albanna2025",
   MIN_KATA_JURNAL: 50,
   TOTAL_SOAL: 12,
