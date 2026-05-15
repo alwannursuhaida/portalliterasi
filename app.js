@@ -17,12 +17,12 @@
 // ─────────────────────────────────────────────
 const CONFIG = {
   FIREBASE: {
-    apiKey:            "AIzaSyDxXvv_O8VsYOJtneJQLNQfDxzTTEokyYU",
-    authDomain:        "silit-albanna.firebaseapp.com",
-    projectId:         "silit-albanna",
-    storageBucket:     "silit-albanna.firebasestorage.app",
-    messagingSenderId: "406439416191",
-    appId:             "1:406439416191:web:6e6fde2562ff0ba238ca4a"
+    apiKey:            "GANTI_DENGAN_API_KEY_ANDA",
+    authDomain:        "GANTI.firebaseapp.com",
+    projectId:         "GANTI_DENGAN_PROJECT_ID",
+    storageBucket:     "GANTI.appspot.com",
+    messagingSenderId: "GANTI_DENGAN_SENDER_ID",
+    appId:             "GANTI_DENGAN_APP_ID"
   },
   ADMIN_PASSWORD: "albanna2025",
   MIN_KATA_JURNAL: 50,
