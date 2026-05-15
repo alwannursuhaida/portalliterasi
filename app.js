@@ -758,6 +758,8 @@ function switchAdminTab(tab) {
   document.querySelectorAll(".tab-btn").forEach((btn, i) =>
     btn.classList.toggle("active", ["input","asesmen","jurnal"][i] === tab)
   );
+  // Tambahkan baris ini:
+  if (tab === "input") initAdminBulk();
 }
 
 async function loadAdminAsesmen() {
