@@ -1,15 +1,18 @@
 /* ============================================================
    SiLit — Sistem Literasi SMP Albanna
-   app.js — Versi Firebase (Pengganti Google Apps Script)
+   app.js — Versi Firebase CDN (Non-Module, Drop-in Replacement)
    ============================================================
 
-   CARA SETUP:
-   1. Buat project di https://console.firebase.google.com
-   2. Aktifkan Firestore Database (mode Production)
-   3. Aktifkan Authentication → Anonymous
-   4. Salin konfigurasi Firebase ke objek CONFIG.FIREBASE di bawah
-   5. Upload file ini bersama index.html ke GitHub Pages
+   CARA PASANG DI index.html:
+   Hapus:   <script src="app.js"></script>
 
+   Ganti dengan (urutan penting):
+   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+   <script src="app.js"></script>
+
+   TIDAK perlu type="module". Semua onclick di HTML tetap bekerja normal.
    ============================================================ */
 
 // ─────────────────────────────────────────────
@@ -17,12 +20,12 @@
 // ─────────────────────────────────────────────
 const CONFIG = {
   FIREBASE: {
-    apiKey:            "GANTI_DENGAN_API_KEY_ANDA",
-    authDomain:        "GANTI.firebaseapp.com",
-    projectId:         "GANTI_DENGAN_PROJECT_ID",
-    storageBucket:     "GANTI.appspot.com",
-    messagingSenderId: "GANTI_DENGAN_SENDER_ID",
-    appId:             "GANTI_DENGAN_APP_ID"
+  apiKey: "AIzaSyDxXvv_O8VsYOJtneJQLNQfDxzTTEokyYU",
+  authDomain: "silit-albanna.firebaseapp.com",
+  projectId: "silit-albanna",
+  storageBucket: "silit-albanna.firebasestorage.app",
+  messagingSenderId: "406439416191",
+  appId: "1:406439416191:web:6e6fde2562ff0ba238ca4a"
   },
   ADMIN_PASSWORD: "albanna2025",
   MIN_KATA_JURNAL: 50,
@@ -30,60 +33,41 @@ const CONFIG = {
 };
 
 // ─────────────────────────────────────────────
-// 2. INISIALISASI FIREBASE
+// 2. INISIALISASI FIREBASE (Compat SDK — tanpa import)
 // ─────────────────────────────────────────────
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {
-  getFirestore, collection, doc,
-  addDoc, setDoc, getDoc, getDocs,
-  query, where, orderBy, serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import {
-  getAuth, signInAnonymously
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+firebase.initializeApp(CONFIG.FIREBASE);
+const db   = firebase.firestore();
+const auth = firebase.auth();
 
-const firebaseApp = initializeApp(CONFIG.FIREBASE);
-const db   = getFirestore(firebaseApp);
-const auth = getAuth(firebaseApp);
-
-// Login anonim otomatis agar Firestore bisa diakses
-signInAnonymously(auth).catch(e => console.error("Auth error:", e));
+auth.signInAnonymously().catch(e => console.error("Auth error:", e));
 
 // ─────────────────────────────────────────────
 // 3. HELPER FIRESTORE
 // ─────────────────────────────────────────────
-
-// Ambil semua dokumen dari koleksi
 async function getAll(col) {
-  const snap = await getDocs(collection(db, col));
+  const snap = await db.collection(col).get();
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-// Ambil dokumen dengan filter field == value
 async function getWhere(col, field, value) {
-  const q = query(collection(db, col), where(field, "==", value));
-  const snap = await getDocs(q);
+  const snap = await db.collection(col).where(field, "==", value).get();
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-// Ambil dokumen dengan dua filter
 async function getWhere2(col, f1, v1, f2, v2) {
-  const q = query(collection(db, col), where(f1, "==", v1), where(f2, "==", v2));
-  const snap = await getDocs(q);
+  const snap = await db.collection(col).where(f1, "==", v1).where(f2, "==", v2).get();
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-// Tambah dokumen baru (auto-ID)
 async function addDocument(col, data) {
-  return await addDoc(collection(db, col), {
+  return await db.collection(col).add({
     ...data,
-    timestamp: serverTimestamp()
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
   });
 }
 
-// Set dokumen dengan ID tertentu (upsert)
 async function setDocument(col, docId, data) {
-  await setDoc(doc(db, col, docId), data, { merge: true });
+  await db.collection(col).doc(docId).set(data, { merge: true });
 }
 
 // ─────────────────────────────────────────────
@@ -96,12 +80,12 @@ let state = {
   peta: [],
 };
 
-let isLaporanLoaded     = false;
+let isLaporanLoaded       = false;
 let chartAngkatanInstance = null;
 let chartHalamanInstance  = null;
 
 // ─────────────────────────────────────────────
-// 5. DATABASE LOKAL (SOAL & BUKU) — TIDAK BERUBAH
+// 5. DATABASE LOKAL (SOAL & BUKU)
 // ─────────────────────────────────────────────
 const BANK_SOAL = [
   { soal: "Ketika membaca sebuah paragraf, apa yang pertama kali kamu perhatikan untuk memahami isinya?", opsi: ["Jumlah kalimat dalam paragraf", "Kata kunci dan ide pokok", "Panjang atau pendeknya paragraf", "Jenis huruf yang digunakan"], jawaban: 1 },
@@ -127,19 +111,19 @@ const KATEGORI_INFO = {
 };
 
 const KOLEKSI_BUKU = [
-  { emoji: "📚", judul: "iPusnas", desc: "Perpustakaan digital nasional gratis. Ribuan buku tersedia.", url: "https://ipusnas.id" },
-  { emoji: "🌐", judul: "Buku Sekolah Elektronik", desc: "Buku pelajaran resmi Kemendikbud bisa diakses gratis.", url: "https://buku.kemdikbud.go.id" },
-  { emoji: "📖", judul: "Lumen Learning", desc: "Materi pelajaran berbahasa Inggris dengan penjelasan interaktif.", url: "https://lumenlearning.com" },
-  { emoji: "🔬", judul: "Khan Academy", desc: "Belajar sains, matematika, dan humaniora secara gratis.", url: "https://id.khanacademy.org" },
-  { emoji: "🗞️", judul: "Kompas.id — Junior", desc: "Berita dan artikel pilihan yang sesuai untuk pelajar.", url: "https://www.kompas.id" },
-  { emoji: "📰", judul: "Cerpen Indonesia", desc: "Kumpulan cerpen dan karya sastra Indonesia pilihan.", url: "https://cerpen-sastra.com" }
+  { emoji: "📚", judul: "iPusnas",                desc: "Perpustakaan digital nasional gratis. Ribuan buku tersedia.",       url: "https://ipusnas.id" },
+  { emoji: "🌐", judul: "Buku Sekolah Elektronik", desc: "Buku pelajaran resmi Kemendikbud bisa diakses gratis.",            url: "https://buku.kemdikbud.go.id" },
+  { emoji: "📖", judul: "Lumen Learning",          desc: "Materi pelajaran berbahasa Inggris dengan penjelasan interaktif.", url: "https://lumenlearning.com" },
+  { emoji: "🔬", judul: "Khan Academy",            desc: "Belajar sains, matematika, dan humaniora secara gratis.",          url: "https://id.khanacademy.org" },
+  { emoji: "🗞️", judul: "Kompas.id — Junior",     desc: "Berita dan artikel pilihan yang sesuai untuk pelajar.",            url: "https://www.kompas.id" },
+  { emoji: "📰", judul: "Cerpen Indonesia",        desc: "Kumpulan cerpen dan karya sastra Indonesia pilihan.",              url: "https://cerpen-sastra.com" }
 ];
 
 const KOLEKSI_MEME = [
-  { title: "Luar Biasa! 🧠✨", desc: "Kapasitas otakmu baru saja bertambah berat hari ini.", img: "https://media.giphy.com/media/d3mlE7uhX8KFgEmY/giphy.gif" },
+  { title: "Luar Biasa! 🧠✨",   desc: "Kapasitas otakmu baru saja bertambah berat hari ini.",                 img: "https://media.giphy.com/media/d3mlE7uhX8KFgEmY/giphy.gif" },
   { title: "Analisis Tajam! 🪒", desc: "Kritikmu sangat tajam. Filsuf pasti menangis haru melihat tulisanmu.", img: "https://media.giphy.com/media/l3q2XhfQ8oCkm1Ts4/giphy.gif" },
-  { title: "Terima Kasih! 🔬", desc: "Pemahamanmu tentang buku ini sangat mendalam.", img: "https://media.giphy.com/media/26gsjCZpPolPr3sBy/giphy.gif" },
-  { title: "Tugas Selesai! ☕", desc: "Sekarang kamu boleh istirahat dan membanggakan dirimu.", img: "https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif" }
+  { title: "Terima Kasih! 🔬",   desc: "Pemahamanmu tentang buku ini sangat mendalam.",                        img: "https://media.giphy.com/media/26gsjCZpPolPr3sBy/giphy.gif" },
+  { title: "Tugas Selesai! ☕",   desc: "Sekarang kamu boleh istirahat dan membanggakan dirimu.",               img: "https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif" }
 ];
 
 // ─────────────────────────────────────────────
@@ -157,8 +141,7 @@ function showToast(msg, isError = false) {
 
 function formatTanggal(ts) {
   if (!ts) return "—";
-  // Firestore Timestamp memiliki method toDate(), string ISO langsung diparse
-  const d = ts?.toDate ? ts.toDate() : new Date(ts);
+  const d = ts && ts.toDate ? ts.toDate() : new Date(ts);
   return d.toLocaleString("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
@@ -181,11 +164,8 @@ function getKategori(skor) {
 // ─────────────────────────────────────────────
 // 7. LOGIN & AUTH
 // ─────────────────────────────────────────────
-
-// Ambil daftar nama siswa per kelas dari koleksi "siswa"
-// Struktur dokumen: { kelas: "7A", nama: "Budi Santoso" }
 async function onKelasChange() {
-  const kelas = document.getElementById("input-class").value;
+  const kelas      = document.getElementById("input-class").value;
   const nameSelect = document.getElementById("input-name");
   nameSelect.disabled = true;
   nameSelect.innerHTML = '<option value="" disabled selected>Memuat data...</option>';
@@ -197,14 +177,11 @@ async function onKelasChange() {
       nameSelect.innerHTML = '<option value="" disabled selected>Belum ada siswa</option>';
       return;
     }
-    rows
-      .map(r => r.nama)
-      .sort()
-      .forEach(nama => {
-        const opt = document.createElement("option");
-        opt.value = nama; opt.textContent = nama;
-        nameSelect.appendChild(opt);
-      });
+    rows.map(r => r.nama).sort().forEach(nama => {
+      const opt = document.createElement("option");
+      opt.value = nama; opt.textContent = nama;
+      nameSelect.appendChild(opt);
+    });
     nameSelect.disabled = false;
   } catch (e) {
     nameSelect.innerHTML = '<option value="" disabled selected>Gagal memuat</option>';
@@ -215,11 +192,8 @@ async function onKelasChange() {
 function handleLogin() {
   const kelas = document.getElementById("input-class").value;
   const nama  = document.getElementById("input-name").value;
-  if (!kelas || !nama) {
-    showToast("Pilih kelas dan nama terlebih dahulu.", true);
-    return;
-  }
-  state.user = { nama, kelas };
+  if (!kelas || !nama) { showToast("Pilih kelas dan nama terlebih dahulu.", true); return; }
+  state.user    = { nama, kelas };
   state.isAdmin = false;
   enterDashboard();
 }
@@ -234,7 +208,7 @@ function checkAdminPass() {
   const pass = document.getElementById("admin-pass").value;
   if (pass === CONFIG.ADMIN_PASSWORD) {
     document.getElementById("admin-modal").style.display = "none";
-    state.user = { nama: "Administrator", kelas: "Admin" };
+    state.user    = { nama: "Administrator", kelas: "Admin" };
     state.isAdmin = true;
     enterDashboard();
     switchPage("admin");
@@ -256,18 +230,17 @@ function enterDashboard() {
 
   const inisial = state.user.nama.charAt(0).toUpperCase();
   document.getElementById("sidebar-avatar").textContent = inisial;
-  document.getElementById("sidebar-name").textContent = state.user.nama;
-  document.getElementById("sidebar-class").textContent = "Kelas " + state.user.kelas;
+  document.getElementById("sidebar-name").textContent   = state.user.nama;
+  document.getElementById("sidebar-class").textContent  = "Kelas " + state.user.kelas;
 
   if (!state.isAdmin) {
-    document.getElementById("profile-avatar").textContent = inisial;
-    document.getElementById("profile-name").textContent = state.user.nama;
-    document.getElementById("profile-class").textContent = "Kelas " + state.user.kelas;
+    document.getElementById("profile-avatar").textContent    = inisial;
+    document.getElementById("profile-name").textContent      = state.user.nama;
+    document.getElementById("profile-class").textContent     = "Kelas " + state.user.kelas;
     document.getElementById("profile-card-wrap").setAttribute("data-initial", inisial);
   }
 
   document.getElementById("nav-admin-wrap").style.display = state.isAdmin ? "block" : "none";
-
   loadBerandaStats();
   renderKoleksi();
   initAsesmen();
@@ -280,7 +253,6 @@ function enterDashboard() {
 function switchPage(page) {
   document.querySelectorAll(".page-section").forEach(el => el.classList.remove("active"));
   document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
-
   document.getElementById("page-" + page).classList.add("active");
   const navBtn = document.querySelector(`.nav-item[data-page="${page}"]`);
   if (navBtn) navBtn.classList.add("active");
@@ -290,61 +262,51 @@ function switchPage(page) {
   if (page === "laporan")  loadLaporan(false);
   if (page === "peta")     loadPeta();
   if (page === "jurnal") { loadJurnalHistory(); checkWidgetJumat(); }
-  if (page === "admin") { loadAdminAsesmen(); loadAdminJurnal(); }
+  if (page === "admin")  { loadAdminAsesmen(); loadAdminJurnal(); }
 }
 
 // ─────────────────────────────────────────────
 // 9. BERANDA & LEADERBOARD
 // ─────────────────────────────────────────────
-
-// Ambil skor terakhir dan jumlah jurnal siswa yang login
 async function loadBerandaStats() {
   if (state.isAdmin) return;
   try {
-    // Asesmen terakhir siswa ini
     const asesmenRows = await getWhere2("asesmen", "kelas", state.user.kelas, "nama", state.user.nama);
     asesmenRows.sort((a, b) => {
-      const ta = a.timestamp?.toDate?.() ?? new Date(a.timestamp ?? 0);
-      const tb = b.timestamp?.toDate?.() ?? new Date(b.timestamp ?? 0);
+      const ta = a.timestamp ? a.timestamp.toDate() : new Date(0);
+      const tb = b.timestamp ? b.timestamp.toDate() : new Date(0);
       return tb - ta;
     });
-    const terakhir = asesmenRows[0];
-
-    // Jumlah jurnal siswa ini
+    const terakhir   = asesmenRows[0];
     const jurnalRows = await getWhere2("jurnal", "kelas", state.user.kelas, "nama", state.user.nama);
 
-    document.getElementById("stat-skor").textContent     = terakhir ? terakhir.skor : "—";
-    document.getElementById("stat-jurnal").textContent   = jurnalRows.length;
-    document.getElementById("stat-kategori").textContent = terakhir ? terakhir.kategori : "—";
+    document.getElementById("stat-skor").textContent          = terakhir ? terakhir.skor : "—";
+    document.getElementById("stat-jurnal").textContent        = jurnalRows.length;
+    document.getElementById("stat-kategori").textContent      = terakhir ? terakhir.kategori : "—";
     document.getElementById("profile-badge-text").textContent = terakhir ? terakhir.kategori : "Belum asesmen";
-  } catch (e) {
-    console.warn("Gagal loadBerandaStats:", e);
-  }
+  } catch (e) { console.warn("Gagal loadBerandaStats:", e); }
 }
 
 async function loadLeaderboard() {
   try {
-    const ulasan = await getAll("ulasan");
+    const ulasan  = await getAll("ulasan");
+    const isPa    = k => /[ABC]$/i.test(k);
+    const isPi    = k => /[DEF]$/i.test(k);
+    const perSiswa   = {};
+    const kelasCount = {};
 
-    // Hitung ulasan per siswa
-    const perSiswa = {};
     ulasan.forEach(u => {
       const key = `${u.kelas}|${u.nama}`;
-      perSiswa[key] = (perSiswa[key] || { nama: u.nama, kelas: u.kelas, count: 0 });
+      if (!perSiswa[key]) perSiswa[key] = { nama: u.nama, kelas: u.kelas, count: 0 };
       perSiswa[key].count++;
+      kelasCount[u.kelas] = (kelasCount[u.kelas] || 0) + 1;
     });
-
-    const isPa = k => /[ABC]$/i.test(k);
-    const isPi = k => /[DEF]$/i.test(k);
 
     let spA = { nama: "-", kelas: "-", count: 0 };
     let spI = { nama: "-", kelas: "-", count: 0 };
-    const kelasCount = {};
-
     Object.values(perSiswa).forEach(s => {
       if (isPa(s.kelas) && s.count > spA.count) spA = s;
       if (isPi(s.kelas) && s.count > spI.count) spI = s;
-      kelasCount[s.kelas] = (kelasCount[s.kelas] || 0) + s.count;
     });
 
     let kpA = { kelas: "-", count: 0 };
@@ -362,19 +324,17 @@ async function loadLeaderboard() {
     document.getElementById("lb-kelas-putra-desc").textContent = `Total ${kpA.count} Ulasan`;
     document.getElementById("lb-kelas-putri").textContent      = kpI.kelas;
     document.getElementById("lb-kelas-putri-desc").textContent = `Total ${kpI.count} Ulasan`;
-  } catch (e) {
-    console.warn("Gagal memuat leaderboard:", e);
-  }
+  } catch (e) { console.warn("Gagal memuat leaderboard:", e); }
 }
 
 // ─────────────────────────────────────────────
 // 10. ASESMEN
 // ─────────────────────────────────────────────
 function initAsesmen() {
-  state.quiz.soalAcak  = acakArray(BANK_SOAL).slice(0, CONFIG.TOTAL_SOAL);
+  state.quiz.soalAcak   = acakArray(BANK_SOAL).slice(0, CONFIG.TOTAL_SOAL);
   state.quiz.currentIdx = 0;
-  state.quiz.jawaban   = new Array(CONFIG.TOTAL_SOAL).fill(null);
-  state.quiz.selesai   = false;
+  state.quiz.jawaban    = new Array(CONFIG.TOTAL_SOAL).fill(null);
+  state.quiz.selesai    = false;
   document.getElementById("quiz-container").style.display   = "block";
   document.getElementById("result-container").style.display = "none";
   renderSoal();
@@ -394,16 +354,15 @@ function renderSoal() {
   const letters   = ["A", "B", "C", "D"];
   const container = document.getElementById("options-container");
   container.innerHTML = "";
-
   soal.opsi.forEach((opsi, i) => {
     const btn = document.createElement("button");
     btn.className = "option-btn" + (state.quiz.jawaban[idx] === i ? " selected" : "");
     btn.innerHTML = `<span class="opt-letter">${letters[i]}</span> ${opsi}`;
-    btn.onclick = () => pilihJawaban(i);
+    btn.onclick   = () => pilihJawaban(i);
     container.appendChild(btn);
   });
 
-  document.getElementById("btn-next").disabled = state.quiz.jawaban[idx] === null;
+  document.getElementById("btn-next").disabled  = state.quiz.jawaban[idx] === null;
   document.getElementById("btn-next").innerHTML = idx === total - 1
     ? "Selesai"
     : "Lanjut <i class='fas fa-arrow-right' style='margin-left:6px'></i>";
@@ -423,13 +382,9 @@ async function nextQuestion() {
   }
 }
 
-// Simpan hasil asesmen ke koleksi "asesmen"
-// Struktur: { nama, kelas, skor, kategori, timestamp }
 async function selesaikanAsesmen() {
   let skor = 0;
-  state.quiz.soalAcak.forEach((soal, i) => {
-    if (state.quiz.jawaban[i] === soal.jawaban) skor++;
-  });
+  state.quiz.soalAcak.forEach((soal, i) => { if (state.quiz.jawaban[i] === soal.jawaban) skor++; });
   const kategori = getKategori(skor);
 
   document.getElementById("quiz-container").style.display   = "none";
@@ -439,17 +394,10 @@ async function selesaikanAsesmen() {
   document.getElementById("result-desc").textContent        = KATEGORI_INFO[kategori].desc;
 
   try {
-    await addDocument("asesmen", {
-      nama: state.user.nama,
-      kelas: state.user.kelas,
-      skor,
-      kategori
-    });
+    await addDocument("asesmen", { nama: state.user.nama, kelas: state.user.kelas, skor, kategori });
     showToast("Hasil asesmen disimpan!");
     loadBerandaStats();
-  } catch (e) {
-    showToast("Gagal menyimpan hasil ke database.", true);
-  }
+  } catch (e) { showToast("Gagal menyimpan hasil ke database.", true); }
 }
 
 // ─────────────────────────────────────────────
@@ -458,48 +406,32 @@ async function selesaikanAsesmen() {
 async function loadPeta() {
   const filter = document.getElementById("peta-filter-kelas").value;
   ["dini","awal","semenjana","madya","mahir"].forEach(k => {
-    document.getElementById("list-" + k).innerHTML = '<p class="peta-empty"><i class="fas fa-circle-notch fa-spin"></i> Memuat...</p>';
+    document.getElementById("list-"  + k).innerHTML   = '<p class="peta-empty"><i class="fas fa-circle-notch fa-spin"></i> Memuat...</p>';
     document.getElementById("count-" + k).textContent = "0";
   });
-
   try {
-    state.peta = filter
-      ? await getWhere("asesmen", "kelas", filter)
-      : await getAll("asesmen");
+    state.peta = filter ? await getWhere("asesmen", "kelas", filter) : await getAll("asesmen");
     renderPeta();
-  } catch (e) {
-    showToast("Gagal memuat peta.", true);
-  }
+  } catch (e) { showToast("Gagal memuat peta.", true); }
 }
 
 function renderPeta() {
   const filter = document.getElementById("peta-filter-kelas").value;
   const data   = filter ? state.peta.filter(r => r.kelas === filter) : state.peta;
+  const groups = { "Pembaca Dini":"dini","Pembaca Awal":"awal","Pembaca Semenjana":"semenjana","Pembaca Madya":"madya","Pembaca Mahir":"mahir" };
+  const items  = { dini:[],awal:[],semenjana:[],madya:[],mahir:[] };
 
-  const groups = {
-    "Pembaca Dini": "dini", "Pembaca Awal": "awal",
-    "Pembaca Semenjana": "semenjana", "Pembaca Madya": "madya", "Pembaca Mahir": "mahir"
-  };
-  const items = { dini:[], awal:[], semenjana:[], madya:[], mahir:[] };
-
-  // Ambil asesmen terbaru per siswa
   const terbaru = {};
   data.forEach(r => {
-    const uid = r.kelas + "|" + r.nama;
-    const ts  = r.timestamp?.toDate?.() ?? new Date(r.timestamp ?? 0);
-    const prev = terbaru[uid];
-    const prevTs = prev ? (prev.timestamp?.toDate?.() ?? new Date(prev.timestamp ?? 0)) : new Date(0);
-    if (!prev || ts > prevTs) terbaru[uid] = r;
+    const uid    = r.kelas + "|" + r.nama;
+    const ts     = r.timestamp ? r.timestamp.toDate() : new Date(0);
+    const prevTs = terbaru[uid] ? (terbaru[uid].timestamp ? terbaru[uid].timestamp.toDate() : new Date(0)) : new Date(0);
+    if (!terbaru[uid] || ts > prevTs) terbaru[uid] = r;
   });
-
-  Object.values(terbaru).forEach(r => {
-    const key = groups[r.kategori];
-    if (key) items[key].push(r);
-  });
-
+  Object.values(terbaru).forEach(r => { const key = groups[r.kategori]; if (key) items[key].push(r); });
   Object.entries(items).forEach(([key, arr]) => {
     document.getElementById("count-" + key).textContent = arr.length;
-    document.getElementById("list-" + key).innerHTML = arr.length
+    document.getElementById("list-"  + key).innerHTML   = arr.length
       ? arr.map(r => `<div class="peta-item" title="${r.kelas} - Skor ${r.skor}">${r.nama}</div>`).join("")
       : '<p class="peta-empty">Kosong</p>';
   });
@@ -529,15 +461,13 @@ function countWords() {
   counter.className   = "word-counter " + (words >= CONFIG.MIN_KATA_JURNAL ? "ok" : "warn");
 }
 
-// Simpan jurnal ke koleksi "jurnal"
-// Struktur: { nama, kelas, judul, penulis, halAwal, halAkhir, ringkasan, timestamp }
 async function submitJurnal() {
-  const judul    = document.getElementById("jurnal-judul").value.trim();
-  const penulis  = document.getElementById("jurnal-penulis").value.trim();
-  const halAwal  = document.getElementById("jurnal-hal-awal").value;
-  const halAkhir = document.getElementById("jurnal-hal-akhir").value;
+  const judul     = document.getElementById("jurnal-judul").value.trim();
+  const penulis   = document.getElementById("jurnal-penulis").value.trim();
+  const halAwal   = document.getElementById("jurnal-hal-awal").value;
+  const halAkhir  = document.getElementById("jurnal-hal-akhir").value;
   const ringkasan = document.getElementById("jurnal-ringkasan").value.trim();
-  const words    = ringkasan ? ringkasan.split(/\s+/).length : 0;
+  const words     = ringkasan ? ringkasan.split(/\s+/).length : 0;
 
   if (!judul || !penulis || !halAwal || !halAkhir || !ringkasan) { showToast("Lengkapi form!", true); return; }
   if (parseInt(halAkhir) < parseInt(halAwal)) { showToast("Halaman akhir salah.", true); return; }
@@ -545,26 +475,17 @@ async function submitJurnal() {
 
   const btn = document.querySelector("#page-jurnal .btn-primary");
   btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
-
   try {
     await addDocument("jurnal", {
-      nama: state.user.nama,
-      kelas: state.user.kelas,
-      judul, penulis,
-      halAwal: parseInt(halAwal),
-      halAkhir: parseInt(halAkhir),
-      ringkasan
+      nama: state.user.nama, kelas: state.user.kelas,
+      judul, penulis, halAwal: parseInt(halAwal), halAkhir: parseInt(halAkhir), ringkasan
     });
     showToast("Jurnal disimpan!");
     ["jurnal-judul","jurnal-penulis","jurnal-hal-awal","jurnal-hal-akhir","jurnal-ringkasan"]
       .forEach(id => document.getElementById(id).value = "");
     countWords(); loadJurnalHistory(); loadBerandaStats(); checkWidgetJumat();
-  } catch (e) {
-    showToast("Gagal menyimpan.", true);
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fas fa-paper-plane" style="margin-right:8px"></i>Kirim Jurnal';
-  }
+  } catch (e) { showToast("Gagal menyimpan.", true); }
+  finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane" style="margin-right:8px"></i>Kirim Jurnal'; }
 }
 
 async function loadJurnalHistory() {
@@ -573,13 +494,11 @@ async function loadJurnalHistory() {
   try {
     const items = await getWhere2("jurnal", "kelas", state.user.kelas, "nama", state.user.nama);
     if (items.length === 0) { container.innerHTML = '<p style="color:#bbb;font-size:13px">Belum ada jurnal.</p>'; return; }
-
     items.sort((a, b) => {
-      const ta = a.timestamp?.toDate?.() ?? new Date(0);
-      const tb = b.timestamp?.toDate?.() ?? new Date(0);
+      const ta = a.timestamp ? a.timestamp.toDate() : new Date(0);
+      const tb = b.timestamp ? b.timestamp.toDate() : new Date(0);
       return tb - ta;
     });
-
     container.innerHTML = items.map(j => `
       <div class="journal-item">
         <div class="journal-item-title">📖 ${j.judul} <span style="font-weight:400;color:var(--ink-soft)">– ${j.penulis}</span></div>
@@ -587,66 +506,46 @@ async function loadJurnalHistory() {
         <div class="journal-item-body">${j.ringkasan}</div>
       </div>
     `).join("");
-  } catch (e) {
-    container.innerHTML = '<p style="color:#ef4444;font-size:13px">Gagal memuat riwayat.</p>';
-  }
+  } catch (e) { container.innerHTML = '<p style="color:#ef4444;font-size:13px">Gagal memuat riwayat.</p>'; }
 }
 
 async function checkWidgetJumat() {
   const widget    = document.getElementById("widget-jumat");
   const container = document.getElementById("jumat-list-container");
   if (!widget || !container) return;
-
   const today = new Date();
   if (today.getDay() !== 5) { widget.style.display = "none"; return; }
 
   widget.style.display = "block";
   container.innerHTML  = '<p style="color:#bbb;font-size:13px"><i class="fas fa-circle-notch fa-spin"></i> Memindai data...</p>';
-
   try {
-    const [semuaSiswa, semuaJurnal] = await Promise.all([
-      getAll("siswa"),
-      getAll("jurnal")
-    ]);
-
+    const [semuaSiswa, semuaJurnal] = await Promise.all([getAll("siswa"), getAll("jurnal")]);
     const todayStr = today.toDateString();
     const sudahSet = new Set();
-
     semuaJurnal.forEach(j => {
-      const ts = j.timestamp?.toDate?.() ?? new Date(j.timestamp ?? 0);
-      if (ts.toDateString() === todayStr) {
+      const ts = j.timestamp ? j.timestamp.toDate() : new Date(0);
+      if (ts.toDateString() === todayStr)
         sudahSet.add(`${String(j.kelas).trim().toUpperCase()}|${String(j.nama).trim().toLowerCase()}`);
-      }
     });
-
     const belumData = {};
     semuaSiswa.forEach(s => {
       const k  = String(s.kelas).trim().toUpperCase();
       const id = k + "|" + String(s.nama).trim().toLowerCase();
-      if (!sudahSet.has(id)) {
-        if (!belumData[k]) belumData[k] = [];
-        belumData[k].push(s.nama);
-      }
+      if (!sudahSet.has(id)) { if (!belumData[k]) belumData[k] = []; belumData[k].push(s.nama); }
     });
-
     const keys = Object.keys(belumData).sort();
-    if (keys.length === 0) {
-      container.innerHTML = `<div style="text-align:center;padding:20px 0"><i class="fas fa-shield-check" style="font-size:32px;color:var(--green-main)"></i><p style="font-weight:700;margin-top:8px">Kepatuhan 100%</p></div>`;
-    } else {
-      container.innerHTML = keys.map(k => `
-        <div style="margin-bottom:12px;border:1px solid #fecaca;border-radius:10px;overflow:hidden">
-          <div style="background:#fef2f2;padding:8px;font-size:12px;font-weight:800;color:#991b1b;display:flex;justify-content:space-between">
-            Kelas ${k} <span style="background:#ef4444;color:#fff;padding:2px 6px;border-radius:6px">${belumData[k].length}</span>
-          </div>
-          <div style="padding:8px">
-            ${belumData[k].sort().map(n => `<div style="font-size:11px;padding:4px 0;border-bottom:1px dashed #f1f5f9"><i class="fas fa-xmark" style="color:#ef4444"></i> ${n}</div>`).join("")}
-          </div>
-        </div>
-      `).join("");
-    }
-  } catch (e) {
-    container.innerHTML = '<p style="color:#ef4444;font-size:12px">Gagal memuat widget.</p>';
-  }
+    container.innerHTML = keys.length === 0
+      ? `<div style="text-align:center;padding:20px 0"><i class="fas fa-shield-check" style="font-size:32px;color:var(--green-main)"></i><p style="font-weight:700;margin-top:8px">Kepatuhan 100%</p></div>`
+      : keys.map(k => `
+          <div style="margin-bottom:12px;border:1px solid #fecaca;border-radius:10px;overflow:hidden">
+            <div style="background:#fef2f2;padding:8px;font-size:12px;font-weight:800;color:#991b1b;display:flex;justify-content:space-between">
+              Kelas ${k} <span style="background:#ef4444;color:#fff;padding:2px 6px;border-radius:6px">${belumData[k].length}</span>
+            </div>
+            <div style="padding:8px">
+              ${belumData[k].sort().map(n => `<div style="font-size:11px;padding:4px 0;border-bottom:1px dashed #f1f5f9"><i class="fas fa-xmark" style="color:#ef4444"></i> ${n}</div>`).join("")}
+            </div>
+          </div>`).join("");
+  } catch (e) { container.innerHTML = '<p style="color:#ef4444;font-size:12px">Gagal memuat widget.</p>'; }
 }
 
 // ─────────────────────────────────────────────
@@ -661,56 +560,43 @@ function hitungKataUlasan(inId, outId, min) {
   return w;
 }
 
-// Simpan ulasan ke koleksi "ulasan"
-// Struktur: { nama, kelas, judulBuku, penulisBuku, rating, ulasanKandungan,
-//             kekuatanBuku, kelemahanBuku, kesanBuku, timestamp }
 async function submitUlasanBaru() {
-  const judul    = document.getElementById("ulasan-judul").value.trim();
-  const penulis  = document.getElementById("ulasan-penulis").value.trim();
-  const rating   = document.getElementById("ulasan-rating").value;
-  const kesan    = document.getElementById("ulasan-kesan").value.trim();
-  const wKan = hitungKataUlasan('ulasan-kandungan', 'count-kandungan', 25);
-  const wKek = hitungKataUlasan('ulasan-kekuatan',  'count-kekuatan',  25);
-  const wKel = hitungKataUlasan('ulasan-kelemahan', 'count-kelemahan', 25);
+  const judul   = document.getElementById("ulasan-judul").value.trim();
+  const penulis = document.getElementById("ulasan-penulis").value.trim();
+  const rating  = document.getElementById("ulasan-rating").value;
+  const kesan   = document.getElementById("ulasan-kesan").value.trim();
+  const wKan    = hitungKataUlasan('ulasan-kandungan','count-kandungan',25);
+  const wKek    = hitungKataUlasan('ulasan-kekuatan', 'count-kekuatan', 25);
+  const wKel    = hitungKataUlasan('ulasan-kelemahan','count-kelemahan',25);
 
-  if (!judul || !penulis)                    { showToast("Judul dan Penulis wajib diisi.", true); return; }
-  if (wKan < 25 || wKek < 25 || wKel < 25)  { showToast("Penuhi batas minimal 25 kata.", true); return; }
+  if (!judul || !penulis)                   { showToast("Judul dan Penulis wajib diisi.", true); return; }
+  if (wKan < 25 || wKek < 25 || wKel < 25) { showToast("Penuhi batas minimal 25 kata.", true); return; }
 
   const btn = document.getElementById("btn-submit-ulasan");
   btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengirim...';
-
   try {
     await addDocument("ulasan", {
-      nama: state.user.nama,
-      kelas: state.user.kelas,
-      judulBuku:        judul,
-      penulisBuku:      penulis,
-      rating:           parseInt(rating),
-      ulasanKandungan:  document.getElementById("ulasan-kandungan").value.trim(),
-      kekuatanBuku:     document.getElementById("ulasan-kekuatan").value.trim(),
-      kelemahanBuku:    document.getElementById("ulasan-kelemahan").value.trim(),
-      kesanBuku:        kesan
+      nama: state.user.nama, kelas: state.user.kelas,
+      judulBuku: judul, penulisBuku: penulis, rating: parseInt(rating),
+      ulasanKandungan: document.getElementById("ulasan-kandungan").value.trim(),
+      kekuatanBuku:    document.getElementById("ulasan-kekuatan").value.trim(),
+      kelemahanBuku:   document.getElementById("ulasan-kelemahan").value.trim(),
+      kesanBuku:       kesan
     });
-
     ["judul","penulis","kandungan","kekuatan","kelemahan","kesan"]
       .forEach(id => document.getElementById(`ulasan-${id}`).value = "");
     document.getElementById("ulasan-rating").value = "5";
-    hitungKataUlasan('ulasan-kandungan', 'count-kandungan', 25);
-    hitungKataUlasan('ulasan-kekuatan',  'count-kekuatan',  25);
-    hitungKataUlasan('ulasan-kelemahan', 'count-kelemahan', 25);
-
+    hitungKataUlasan('ulasan-kandungan','count-kandungan',25);
+    hitungKataUlasan('ulasan-kekuatan', 'count-kekuatan', 25);
+    hitungKataUlasan('ulasan-kelemahan','count-kelemahan',25);
     loadUlasanHistory();
     const meme = KOLEKSI_MEME[Math.floor(Math.random() * KOLEKSI_MEME.length)];
-    document.getElementById("meme-title").textContent = meme.title;
-    document.getElementById("meme-desc").textContent  = meme.desc;
-    document.getElementById("meme-img").src           = meme.img;
+    document.getElementById("meme-title").textContent   = meme.title;
+    document.getElementById("meme-desc").textContent    = meme.desc;
+    document.getElementById("meme-img").src             = meme.img;
     document.getElementById("meme-modal").style.display = "flex";
-  } catch (e) {
-    showToast("Gagal menyimpan ulasan.", true);
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fas fa-paper-plane" style="margin-right:8px"></i>Kirim Evaluasi Kritis';
-  }
+  } catch (e) { showToast("Gagal menyimpan ulasan.", true); }
+  finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane" style="margin-right:8px"></i>Kirim Evaluasi Kritis'; }
 }
 
 async function loadUlasanHistory() {
@@ -719,20 +605,20 @@ async function loadUlasanHistory() {
   try {
     const items = await getWhere2("ulasan", "kelas", state.user.kelas, "nama", state.user.nama);
     if (items.length === 0) { container.innerHTML = '<p style="color:#bbb;font-size:13px">Belum ada evaluasi.</p>'; return; }
-
     items.sort((a, b) => {
-      const ta = a.timestamp?.toDate?.() ?? new Date(0);
-      const tb = b.timestamp?.toDate?.() ?? new Date(0);
+      const ta = a.timestamp ? a.timestamp.toDate() : new Date(0);
+      const tb = b.timestamp ? b.timestamp.toDate() : new Date(0);
       return tb - ta;
     });
-
     container.innerHTML = items.map(u => {
       const rt = parseInt(u.rating) || 5;
       return `
-      <div class="journal-item" style="border-left: 4px solid var(--green-main)">
+      <div class="journal-item" style="border-left:4px solid var(--green-main)">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-          <div><div class="journal-item-title" style="font-size:15px">📖 ${u.judulBuku}</div>
-               <div style="font-size:11px;color:var(--ink-soft);font-weight:700">Oleh: ${u.penulisBuku}</div></div>
+          <div>
+            <div class="journal-item-title" style="font-size:15px">📖 ${u.judulBuku}</div>
+            <div style="font-size:11px;color:var(--ink-soft);font-weight:700">Oleh: ${u.penulisBuku}</div>
+          </div>
           <div style="color:var(--gold);font-size:12px;background:#fef3c7;padding:4px 8px;border-radius:8px">${"★".repeat(rt)}${"☆".repeat(5-rt)}</div>
         </div>
         <div class="journal-item-meta" style="margin-bottom:12px">${formatTanggal(u.timestamp)}</div>
@@ -742,9 +628,7 @@ async function loadUlasanHistory() {
         <div style="font-size:12px;color:var(--ink-soft);font-style:italic;border-top:1px dashed #eef2ef;padding-top:6px">" ${u.kesanBuku || '-'} "</div>
       </div>`;
     }).join("");
-  } catch (e) {
-    container.innerHTML = '<p style="color:#ef4444;font-size:13px">Gagal memuat arsip.</p>';
-  }
+  } catch (e) { container.innerHTML = '<p style="color:#ef4444;font-size:13px">Gagal memuat arsip.</p>'; }
 }
 
 // ─────────────────────────────────────────────
@@ -754,11 +638,9 @@ async function loadLaporan(forceReload = false) {
   if (!forceReload && isLaporanLoaded) return;
   const tbody = document.getElementById("tabel-rekap-bulanan");
   if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#bbb;padding:20px"><i class="fas fa-circle-notch fa-spin"></i> Menarik data...</td></tr>';
-
   try {
     const [ulasan, jurnal] = await Promise.all([getAll("ulasan"), getAll("jurnal")]);
 
-    // Chart Angkatan (Donut)
     let c7 = 0, c8 = 0, c9 = 0;
     ulasan.forEach(u => {
       const k = String(u.kelas || "").trim();
@@ -774,13 +656,11 @@ async function loadLaporan(forceReload = false) {
       });
     }
 
-    // Chart Halaman per Kelas (Bar)
     const halMap = {};
     jurnal.forEach(j => {
-      const k   = String(j.kelas || "").trim().toUpperCase();
+      const k = String(j.kelas || "").trim().toUpperCase();
       if (!k) return;
-      const baca = Math.max(1, Math.abs((j.halAkhir || 0) - (j.halAwal || 0)));
-      halMap[k]  = (halMap[k] || 0) + baca;
+      halMap[k] = (halMap[k] || 0) + Math.max(1, Math.abs((j.halAkhir||0)-(j.halAwal||0)));
     });
     const lKls = Object.keys(halMap).sort();
     const canvasBar = document.getElementById("chart-halaman");
@@ -788,53 +668,40 @@ async function loadLaporan(forceReload = false) {
       if (chartHalamanInstance) chartHalamanInstance.destroy();
       chartHalamanInstance = new Chart(canvasBar.getContext("2d"), {
         type: "bar",
-        data: { labels: lKls, datasets: [{ label: "Halaman", data: lKls.map(k => halMap[k]), backgroundColor: "#16a05a", borderRadius: 4 }] },
+        data: { labels: lKls, datasets: [{ label: "Halaman", data: lKls.map(k=>halMap[k]), backgroundColor: "#16a05a", borderRadius: 4 }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true }, x: { grid: { display: false } } } }
       });
     }
 
-    // Buku terpopuler
     const pop = {};
-    ulasan.forEach(u => {
-      const jb = String(u.judulBuku || "").trim().toUpperCase();
-      if (jb) pop[jb] = (pop[jb] || 0) + 1;
-    });
-    const lBuku = Object.entries(pop).sort((a, b) => b[1] - a[1]);
-    if (document.getElementById("total-buku-terulas")) document.getElementById("total-buku-terulas").textContent = lBuku.length;
+    ulasan.forEach(u => { const jb = String(u.judulBuku||"").trim().toUpperCase(); if (jb) pop[jb] = (pop[jb]||0)+1; });
+    const lBuku = Object.entries(pop).sort((a,b) => b[1]-a[1]);
+    if (document.getElementById("total-buku-terulas"))  document.getElementById("total-buku-terulas").textContent  = lBuku.length;
     if (lBuku.length > 0) {
-      if (document.getElementById("top-book-1")) document.getElementById("top-book-1").textContent = lBuku[0][0];
+      if (document.getElementById("top-book-1"))       document.getElementById("top-book-1").textContent       = lBuku[0][0];
       if (document.getElementById("top-book-1-count")) document.getElementById("top-book-1-count").textContent = `${lBuku[0][1]} kali diulas`;
     }
 
-    // Tabel rekap bulanan
     const isPa = k => /[ABC]$/i.test(k);
     const isPi = k => /[DEF]$/i.test(k);
     const blnGrp = {};
     ulasan.forEach(u => {
-      const ts = u.timestamp?.toDate?.() ?? new Date(u.timestamp ?? 0);
-      if (isNaN(ts.getTime())) return;
-      const k  = String(u.kelas || "").trim().toUpperCase();
-      const n  = String(u.nama  || "").trim();
-      if (!k || !n) return;
+      const ts = u.timestamp ? u.timestamp.toDate() : null;
+      if (!ts || isNaN(ts.getTime())) return;
+      const k = String(u.kelas||"").trim().toUpperCase();
+      const n = String(u.nama||"").trim();
+      if (!k||!n) return;
       const idB = `${ts.getFullYear()}-${String(ts.getMonth()+1).padStart(2,"0")}`;
-      if (!blnGrp[idB]) blnGrp[idB] = { lbl: ts.toLocaleString("id-ID", { month: "long", year: "numeric" }), d: [], t: 0 };
-      blnGrp[idB].d.push({ k, n }); blnGrp[idB].t++;
+      if (!blnGrp[idB]) blnGrp[idB] = { lbl: ts.toLocaleString("id-ID",{month:"long",year:"numeric"}), d:[], t:0 };
+      blnGrp[idB].d.push({k,n}); blnGrp[idB].t++;
     });
 
     const htm = Object.keys(blnGrp).sort().reverse().map(idB => {
-      const g = blnGrp[idB];
-      const sC = {}, cC = {};
-      g.d.forEach(x => { sC[`${x.k}|${x.n}`] = (sC[`${x.k}|${x.n}`] || 0) + 1; cC[x.k] = (cC[x.k] || 0) + 1; });
-      let spA = { n:"-",c:0 }, spI = { n:"-",c:0 }, kpA = { k:"-",c:0 }, kpI = { k:"-",c:0 };
-      for (const [key, c] of Object.entries(sC)) {
-        const [k, n] = key.split("|");
-        if (isPa(k) && c > spA.c) spA = { n:`${n} (${k})`, c };
-        if (isPi(k) && c > spI.c) spI = { n:`${n} (${k})`, c };
-      }
-      for (const [k, c] of Object.entries(cC)) {
-        if (isPa(k) && c > kpA.c) kpA = { k, c };
-        if (isPi(k) && c > kpI.c) kpI = { k, c };
-      }
+      const g = blnGrp[idB]; const sC={},cC={};
+      g.d.forEach(x => { sC[`${x.k}|${x.n}`]=(sC[`${x.k}|${x.n}`]||0)+1; cC[x.k]=(cC[x.k]||0)+1; });
+      let spA={n:"-",c:0},spI={n:"-",c:0},kpA={k:"-",c:0},kpI={k:"-",c:0};
+      for (const [key,c] of Object.entries(sC)) { const [k,n]=key.split("|"); if(isPa(k)&&c>spA.c) spA={n:`${n} (${k})`,c}; if(isPi(k)&&c>spI.c) spI={n:`${n} (${k})`,c}; }
+      for (const [k,c] of Object.entries(cC)) { if(isPa(k)&&c>kpA.c) kpA={k,c}; if(isPi(k)&&c>kpI.c) kpI={k,c}; }
       return `<tr><td><strong>${g.lbl}</strong></td><td>${spA.n}<br><span style="font-size:10px;color:#aaa">${spA.c} ulasan</span></td><td>${spI.n}<br><span style="font-size:10px;color:#aaa">${spI.c} ulasan</span></td><td>${kpA.k}<br><span style="font-size:10px;color:#aaa">${kpA.c} ulasan</span></td><td>${kpI.k}<br><span style="font-size:10px;color:#aaa">${kpI.c} ulasan</span></td><td><strong style="color:var(--green-main)">${g.t}</strong></td></tr>`;
     }).join("");
 
@@ -861,13 +728,9 @@ function initAdminBulk() {
   }
 }
 
-// Simpan siswa ke koleksi "siswa"
-// ID dokumen = "kelas_NamaSiswa" agar tidak ada duplikat
-// Struktur: { kelas, nama }
 async function addBulkStudents() {
   const kelas = document.getElementById("db-bulk-class").value;
   if (!kelas) { showToast("Pilih kelas target.", true); return; }
-
   const names = [];
   for (let i = 1; i <= 30; i++) {
     const val = document.getElementById(`bulk-${i}`).value.trim();
@@ -879,17 +742,13 @@ async function addBulkStudents() {
   btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
   try {
     await Promise.all(names.map(nama => {
-      const docId = `${kelas}_${nama.replace(/\s+/g, "_")}`;
+      const docId = `${kelas}_${nama.replace(/\s+/g,"_")}`;
       return setDocument("siswa", docId, { kelas, nama });
     }));
     showToast(`${names.length} siswa berhasil disimpan!`);
     for (let i = 1; i <= 30; i++) document.getElementById(`bulk-${i}`).value = "";
-  } catch (e) {
-    showToast("Gagal menyimpan data.", true);
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fas fa-cloud-arrow-up"></i> Simpan ke Database';
-  }
+  } catch (e) { showToast("Gagal menyimpan data.", true); }
+  finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-cloud-arrow-up"></i> Simpan ke Database'; }
 }
 
 function switchAdminTab(tab) {
@@ -906,18 +765,12 @@ async function loadAdminAsesmen() {
   tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#bbb;padding:20px"><i class="fas fa-circle-notch fa-spin"></i> Memuat...</td></tr>';
   try {
     const items = await getAll("asesmen");
-    items.sort((a, b) => {
-      const ta = a.timestamp?.toDate?.() ?? new Date(0);
-      const tb = b.timestamp?.toDate?.() ?? new Date(0);
-      return tb - ta;
-    });
-    if (items.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#bbb;padding:20px">Belum ada data</td></tr>'; return; }
-    tbody.innerHTML = items.map((r, i) =>
+    items.sort((a,b) => { const ta=a.timestamp?a.timestamp.toDate():new Date(0); const tb=b.timestamp?b.timestamp.toDate():new Date(0); return tb-ta; });
+    if (items.length===0) { tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#bbb;padding:20px">Belum ada data</td></tr>'; return; }
+    tbody.innerHTML = items.map((r,i) =>
       `<tr><td>${i+1}</td><td>${formatTanggal(r.timestamp)}</td><td><strong>${r.kelas}</strong></td><td>${r.nama}</td><td><strong>${r.skor}/12</strong></td><td><strong style="color:var(--green-main)">${r.kategori}</strong></td></tr>`
     ).join("");
-  } catch (e) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#ef4444;padding:20px">Gagal memuat</td></tr>';
-  }
+  } catch(e) { tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#ef4444;padding:20px">Gagal memuat</td></tr>'; }
 }
 
 async function loadAdminJurnal() {
@@ -925,16 +778,10 @@ async function loadAdminJurnal() {
   tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#bbb;padding:20px"><i class="fas fa-circle-notch fa-spin"></i> Memuat...</td></tr>';
   try {
     const items = await getAll("jurnal");
-    items.sort((a, b) => {
-      const ta = a.timestamp?.toDate?.() ?? new Date(0);
-      const tb = b.timestamp?.toDate?.() ?? new Date(0);
-      return tb - ta;
-    });
-    if (items.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#bbb;padding:20px">Belum ada data</td></tr>'; return; }
-    tbody.innerHTML = items.map((r, i) =>
+    items.sort((a,b) => { const ta=a.timestamp?a.timestamp.toDate():new Date(0); const tb=b.timestamp?b.timestamp.toDate():new Date(0); return tb-ta; });
+    if (items.length===0) { tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#bbb;padding:20px">Belum ada data</td></tr>'; return; }
+    tbody.innerHTML = items.map((r,i) =>
       `<tr><td>${i+1}</td><td>${formatTanggal(r.timestamp)}</td><td><strong>${r.kelas}</strong></td><td>${r.nama}</td><td>${r.judul}</td><td>${r.halAwal}–${r.halAkhir}</td></tr>`
     ).join("");
-  } catch (e) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#ef4444;padding:20px">Gagal memuat</td></tr>';
-  }
+  } catch(e) { tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#ef4444;padding:20px">Gagal memuat</td></tr>'; }
 }
