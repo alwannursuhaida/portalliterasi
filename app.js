@@ -262,8 +262,13 @@ function switchPage(page) {
   if (page === "laporan")  loadLaporan(false);
   if (page === "peta")     loadPeta();
   if (page === "jurnal") { loadJurnalHistory(); checkWidgetJumat(); }
-  if (page === "admin")  { loadAdminAsesmen(); loadAdminJurnal(); }
-}
+  // Di switchPage, bagian admin:
+if (page === "admin") { 
+  initAdminBulk();  // ← tambahkan ini
+  loadAdminAsesmen(); 
+  loadAdminJurnal(); 
+} }
+
 
 // ─────────────────────────────────────────────
 // 9. BERANDA & LEADERBOARD
