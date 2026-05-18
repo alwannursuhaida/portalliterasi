@@ -727,8 +727,30 @@ function initAdminBulk() {
   container.innerHTML = "";
   for (let i = 1; i <= 30; i++) {
     const input = document.createElement("input");
-    input.type = "text"; input.className = "bulk-input";
-    input.placeholder = `Siswa ${i}`; input.id = `bulk-${i}`;
+    input.type        = "text";
+    input.className   = "bulk-input";
+    input.placeholder = `Siswa ${i}`;
+    input.id          = `bulk-${i}`;
+
+    // ← Tambahan: deteksi paste
+    input.addEventListener("paste", function (e) {
+      e.preventDefault();
+      const raw   = (e.clipboardData || window.clipboardData).getData("text");
+      const names = raw
+        .split(/\r?\n/)           // pisah per baris
+        .map(n => n.trim())       // hapus spasi
+        .filter(n => n.length);   // buang baris kosong
+
+      // Cari index input ini
+      const inputs = [...container.querySelectorAll("input.bulk-input")];
+      const start  = inputs.indexOf(this);
+
+      names.forEach((nama, idx) => {
+        const target = inputs[start + idx];
+        if (target) target.value = nama;
+      });
+    });
+
     container.appendChild(input);
   }
 }
